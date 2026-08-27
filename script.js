@@ -18,6 +18,25 @@ const relType=document.getElementById("cardinality");
 const addRelBtn=document.getElementById("addRelBtn");
 const relationshipList=document.getElementById("relationshipList");
 
+const stepBadge=document.getElementById("stepBadge");
+const flowEntities=document.getElementById("flowEntities");
+const flowRelations=document.getElementById("flowRelations");
+const flowSql=document.getElementById("flowSql");
+
+let sqlGenerated=false;
+
+function updateProgress(){
+    const hasEntities=entities.length>0;
+    const hasRelationships=relationships.length>0;
+
+    const stepNumber=sqlGenerated?3:(hasRelationships?2:1);
+    if(stepBadge)stepBadge.textContent=`Step ${stepNumber}`;
+
+    if(flowEntities)flowEntities.classList.toggle("active",hasEntities);
+    if(flowRelations)flowRelations.classList.toggle("active",hasRelationships);
+    if(flowSql)flowSql.classList.toggle("active",sqlGenerated);
+}
+
 function detectPrimaryKey(name){
     name=name.toLowerCase().trim();
     return name==="id"||name.endsWith("_id");
@@ -110,6 +129,9 @@ addEntityBtn.addEventListener("click",()=>{
     updateRelationshipSelectors();
     renderDiagram();
 
+    sqlGenerated=false;
+    updateProgress();
+
     showValidation("success",`${name} added successfully.`);
 });
 
@@ -152,6 +174,9 @@ function deleteEntity(index){
     updateRelationshipSelectors();
     renderRelationshipList();
     renderDiagram();
+
+    sqlGenerated=false;
+    updateProgress();
 
     showValidation("success",`${removed.name} removed.`);
 }
@@ -200,6 +225,9 @@ if(addRelBtn){
         renderRelationshipList();
         renderDiagram();
 
+        sqlGenerated=false;
+        updateProgress();
+
         showValidation("success",`${from} ${type} ${to} relationship added.`);
     });
 }
@@ -231,6 +259,9 @@ function deleteRelationship(index){
     relationships.splice(index,1);
     renderRelationshipList();
     renderDiagram();
+
+    sqlGenerated=false;
+    updateProgress();
 }
 
 function renderDiagram(){
@@ -254,252 +285,3 @@ function renderDiagram(){
 
     entities.forEach((entity,index)=>{
         const wrapper=document.createElement("div");
-        wrapper.className="er-entity-wrapper";
-        wrapper.dataset.entity=entity.name;
-
-        const entityBox=document.createElement("div");
-        entityBox.className="er-entity";
-        entityBox.textContent=entity.name;
-
-        wrapper.appendChild(entityBox);
-
-        entity.attributes.forEach((attribute,i)=>{
-            const aw=document.createElement("div");
-            aw.className="er-attribute-wrapper";
-
-            const oval=document.createElement("div");
-            oval.className="er-attribute";
-
-            if(attribute.primaryKey)oval.classList.add("primary-key");
-
-            oval.innerHTML=`
-                <span class="attribute-name">
-                    ${attribute.primaryKey
-                        ? `<u>${escapeHTML(attribute.name)}</u>`
-                        : escapeHTML(attribute.name)}
-                </span>
-                <span class="attribute-type">${escapeHTML(attribute.type)}</span>
-            `;
-
-            const line=document.createElement("div");
-            line.className="er-line";
-
-            aw.appendChild(oval);
-            aw.appendChild(line);
-
-            const position=i%4;
-
-            if(position===0)aw.classList.add("attribute-top");
-            if(position===1)aw.classList.add("attribute-right");
-            if(position===2)aw.classList.add("attribute-bottom");
-            if(position===3)aw.classList.add("attribute-left");
-
-            wrapper.appendChild(aw);
-        });
-
-        canvas.appendChild(wrapper);
-        positions[entity.name]=wrapper;
-    });
-
-    diagramArea.appendChild(canvas);
-
-    requestAnimationFrame(()=>{
-        drawRelationships(canvas,positions);
-    });
-}
-
-function edgePoint(rect,cx,cy,tx,ty){
-    const halfW=rect.width/2;
-    const halfH=rect.height/2;
-    const dx=tx-cx;
-    const dy=ty-cy;
-
-    if(dx===0&&dy===0)return{x:cx,y:cy};
-
-    const scaleX=dx!==0?halfW/Math.abs(dx):Infinity;
-    const scaleY=dy!==0?halfH/Math.abs(dy):Infinity;
-    const scale=Math.min(scaleX,scaleY);
-
-    return{x:cx+dx*scale,y:cy+dy*scale};
-}
-
-function drawConnectorLine(canvas,x1,y1,x2,y2){
-    const length=Math.hypot(x2-x1,y2-y1);
-    const angle=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
-
-    const line=document.createElement("div");
-    line.className="er-conn-line";
-    line.style.width=`${length}px`;
-    line.style.left=`${x1}px`;
-    line.style.top=`${y1}px`;
-    line.style.transform=`rotate(${angle}deg)`;
-
-    canvas.appendChild(line);
-}
-
-function drawRelationships(canvas,positions){
-    canvas.querySelectorAll(".er-relationship,.er-conn-line").forEach(x=>x.remove());
-
-    const cRect=canvas.getBoundingClientRect();
-
-    const pairCounts={};
-    relationships.forEach(r=>{
-        const key=[r.from,r.to].sort().join("|");
-        pairCounts[key]=(pairCounts[key]||0)+1;
-    });
-
-    const pairSeen={};
-
-    relationships.forEach((r,index)=>{
-        const a=positions[r.from];
-        const b=positions[r.to];
-
-        if(!a||!b)return;
-
-        const aBox=a.querySelector(".er-entity");
-        const bBox=b.querySelector(".er-entity");
-
-        const aRect=aBox.getBoundingClientRect();
-        const bRect=bBox.getBoundingClientRect();
-
-        const acx=aRect.left+aRect.width/2-cRect.left;
-        const acy=aRect.top+aRect.height/2-cRect.top;
-        const bcx=bRect.left+bRect.width/2-cRect.left;
-        const bcy=bRect.top+bRect.height/2-cRect.top;
-
-        const key=[r.from,r.to].sort().join("|");
-        const countForPair=pairCounts[key];
-        const orderInPair=pairSeen[key]||0;
-        pairSeen[key]=orderInPair+1;
-
-        const dx=bcx-acx;
-        const dy=bcy-acy;
-        const dist=Math.hypot(dx,dy)||1;
-        const nx=-dy/dist;
-        const ny=dx/dist;
-
-        const offsetStep=90;
-        const offsetAmount=(orderInPair-(countForPair-1)/2)*offsetStep;
-
-        const midX=(acx+bcx)/2+nx*offsetAmount;
-        const midY=(acy+bcy)/2+ny*offsetAmount;
-
-        const startPoint=edgePoint(aRect,acx,acy,midX,midY);
-        const endPoint=edgePoint(bRect,bcx,bcy,midX,midY);
-
-        drawConnectorLine(canvas,startPoint.x,startPoint.y,midX,midY);
-        drawConnectorLine(canvas,midX,midY,endPoint.x,endPoint.y);
-
-        const relationship=document.createElement("div");
-        relationship.className="er-relationship";
-        relationship.style.left=`${midX-55}px`;
-        relationship.style.top=`${midY-55}px`;
-
-        const diamond=document.createElement("div");
-        diamond.className="relationship-diamond";
-
-        diamond.innerHTML=`
-            <span class="relationship-name">${escapeHTML(r.type)}</span>
-        `;
-
-        relationship.appendChild(diamond);
-
-        const c1=document.createElement("span");
-        c1.className="cardinality left";
-        c1.textContent=getCardinality(r.type,"from");
-
-        const c2=document.createElement("span");
-        c2.className="cardinality right";
-        c2.textContent=getCardinality(r.type,"to");
-
-        relationship.appendChild(c1);
-        relationship.appendChild(c2);
-
-        canvas.appendChild(relationship);
-    });
-}
-
-function getCardinality(type,side){
-    if(type==="1 : 1")return "1";
-    if(type==="1 : N")return side==="from"?"1":"N";
-    if(type==="N : 1")return side==="from"?"N":"1";
-    if(type==="M : N")return "M";
-    return "";
-}
-
-generateBtn.addEventListener("click",()=>{
-    if(!entities.length){
-        showValidation("error","Add an entity before generating SQL.");
-        return;
-    }
-
-    let sql="";
-
-    entities.forEach(entity=>{
-        sql+=`CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
-
-        entity.attributes.forEach((a,i)=>{
-            let type=a.type==="VARCHAR"?"VARCHAR(100)":a.type;
-
-            let line=`    ${sanitizeSQLName(a.name)} ${type}`;
-
-            if(a.primaryKey)line+=" PRIMARY KEY";
-
-            if(i<entity.attributes.length-1)line+=",";
-
-            sql+=line+"\n";
-        });
-
-        sql+=");\n\n";
-    });
-
-    relationships.forEach(r=>{
-        const from=entities.find(e=>e.name===r.from);
-        const to=entities.find(e=>e.name===r.to);
-
-        if(r.type==="M : N"){
-            const fromPK=from.attributes.find(a=>a.primaryKey);
-            const toPK=to.attributes.find(a=>a.primaryKey);
-
-            if(fromPK&&toPK){
-                const table=`${r.from}_${r.to}`;
-
-                sql+=`CREATE TABLE ${sanitizeSQLName(table)} (\n`;
-                sql+=`    ${sanitizeSQLName(fromPK.name)} INTEGER,\n`;
-                sql+=`    ${sanitizeSQLName(toPK.name)} INTEGER,\n`;
-                sql+=`    PRIMARY KEY (${sanitizeSQLName(fromPK.name)}, ${sanitizeSQLName(toPK.name)})\n`;
-                sql+=");\n\n";
-            }
-        }
-    });
-
-    sqlOutput.textContent=sql.trim();
-
-    showValidation("success","SQL generated successfully from the ER model.");
-});
-
-copyBtn.addEventListener("click",async()=>{
-    const sql=sqlOutput.textContent;
-
-    if(!sql||sql.startsWith("--")){
-        showValidation("error","Generate SQL first.");
-        return;
-    }
-
-    try{
-        await navigator.clipboard.writeText(sql);
-        copyBtn.textContent="Copied!";
-        setTimeout(()=>copyBtn.textContent="Copy SQL",1500);
-    }catch{
-        showValidation("error","Unable to copy SQL.");
-    }
-});
-
-themeBtn.addEventListener("click",()=>{
-    document.body.classList.toggle("light");
-    themeBtn.textContent=document.body.classList.contains("light")?"☀":"☾";
-});
-
-updateRelationshipSelectors();
-renderRelationshipList();
-renderDiagram();
