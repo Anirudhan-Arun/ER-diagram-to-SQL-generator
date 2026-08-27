@@ -14,7 +14,7 @@ const themeBtn=document.getElementById("themeBtn");
 
 const relFrom=document.getElementById("relFrom");
 const relTo=document.getElementById("relTo");
-const relType=document.getElementById("relType");
+const relType=document.getElementById("cardinality");
 const addRelBtn=document.getElementById("addRelBtn");
 const relationshipList=document.getElementById("relationshipList");
 
