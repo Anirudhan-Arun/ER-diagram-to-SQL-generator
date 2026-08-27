@@ -1,251 +1,368 @@
-let entities=[],relationships=[];
+let entities = [];
+let relationships = [];
 
-const $=id=>document.getElementById(id);
-const entityNameInput=$("entityName"),attributesInput=$("attributes");
-const addEntityBtn=$("addEntityBtn"),generateBtn=$("generateBtn");
-const entityList=$("entityList"),diagramArea=$("diagramArea");
-const sqlOutput=$("sqlOutput"),validationBox=$("validationBox");
-const copyBtn=$("copyBtn"),themeBtn=$("themeBtn");
+const entityNameInput = document.getElementById("entityName");
+const attributesInput = document.getElementById("attributes");
+const addEntityBtn = document.getElementById("addEntityBtn");
+const generateBtn = document.getElementById("generateBtn");
+const entityList = document.getElementById("entityList");
+const diagramArea = document.getElementById("diagramArea");
+const sqlOutput = document.getElementById("sqlOutput");
+const validationBox = document.getElementById("validationBox");
+const copyBtn = document.getElementById("copyBtn");
+const themeBtn = document.getElementById("themeBtn");
 
-function esc(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-function sqlName(s){return s.trim().replace(/[^a-zA-Z0-9_]/g,"_")}
-function isPK(n){n=n.toLowerCase();return n==="id"||n.endsWith("_id")}
-
-function typeOf(n){
- n=n.toLowerCase();
- if(isPK(n))return"INTEGER";
- if(/age|count|quantity|credit|mark|score|year|number|total/.test(n))return"INTEGER";
- if(/price|salary|amount|cost|rate|percentage/.test(n))return"DECIMAL";
- if(/date|dob|birth|created|updated/.test(n))return"DATE";
- if(/is_|has_|active|enabled/.test(n))return"BOOLEAN";
- return"VARCHAR";
+function detectPrimaryKey(name) {
+    name = name.toLowerCase().trim();
+    return name === "id" || name.endsWith("_id");
 }
 
-function msg(type,text){
- validationBox.innerHTML=`<strong>${type==="error"?"Validation Error":"Validation"}</strong><p>${esc(text)}</p>`;
+function inferDataType(name) {
+    name = name.toLowerCase().trim();
+
+    if (name === "id" || name.endsWith("_id")) return "INTEGER";
+
+    if (["age","count","quantity","credits","credit","marks","score","year","number","total"]
+        .some(x => name === x || name.includes(x))) return "INTEGER";
+
+    if (["price","salary","amount","cost","rate","percentage"]
+        .some(x => name.includes(x))) return "DECIMAL";
+
+    if (["date","dob","birth","created","updated"]
+        .some(x => name.includes(x))) return "DATE";
+
+    if (["is_","has_","active","enabled"]
+        .some(x => name.includes(x))) return "BOOLEAN";
+
+    return "VARCHAR";
 }
 
-function updateRelationshipInputs(){
- const a=$("relFrom"),b=$("relTo");
- if(!a||!b)return;
- const options=`<option value="">Select entity</option>`+
- entities.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join("");
- a.innerHTML=options;
- b.innerHTML=options;
+addEntityBtn.addEventListener("click", () => {
+    const name = entityNameInput.value.trim();
+    const text = attributesInput.value.trim();
+
+    if (!name || !text) {
+        showValidation("error", "Enter an entity name and at least one attribute.");
+        return;
+    }
+
+    if (entities.some(e => e.name.toLowerCase() === name.toLowerCase())) {
+        showValidation("error", "This entity already exists.");
+        return;
+    }
+
+    const names = text.split(",").map(x => x.trim()).filter(Boolean);
+    const attrs = names.map(name => ({
+        name,
+        type: inferDataType(name),
+        primaryKey: detectPrimaryKey(name)
+    }));
+
+    if (!attrs.some(a => a.primaryKey)) {
+        showValidation("error", "Add an attribute such as id or student_id to create a primary key.");
+        return;
+    }
+
+    entities.push({ name, attributes: attrs });
+
+    entityNameInput.value = "";
+    attributesInput.value = "";
+
+    renderEntities();
+    renderRelationshipSelectors();
+    renderDiagram();
+
+    showValidation("success", `${name} added successfully.`);
+});
+
+function renderEntities() {
+    if (!entities.length) {
+        entityList.innerHTML = '<div class="empty-state">No entities added yet.</div>';
+        return;
+    }
+
+    entityList.innerHTML = entities.map((e, i) => `
+        <div class="entity-item">
+            <button class="delete-btn" onclick="deleteEntity(${i})">×</button>
+            <strong>${escapeHTML(e.name)}</strong>
+            <span>${e.attributes.map(a =>
+                `${escapeHTML(a.name)} (${a.type})${a.primaryKey ? " 🔑" : ""}`
+            ).join(", ")}</span>
+        </div>
+    `).join("");
 }
 
-addEntityBtn.onclick=()=>{
- const name=entityNameInput.value.trim(),text=attributesInput.value.trim();
- if(!name)return msg("error","Enter an entity name.");
- if(!text)return msg("error","Enter at least one attribute.");
- if(entities.some(e=>e.name.toLowerCase()===name.toLowerCase()))
-  return msg("error","This entity already exists.");
+function deleteEntity(index) {
+    const removed = entities[index];
+    relationships = relationships.filter(r =>
+        r.from !== removed.name && r.to !== removed.name
+    );
 
- const attributes=text.split(",").map(x=>x.trim()).filter(Boolean)
-  .map(name=>({name,type:typeOf(name),primaryKey:isPK(name)}));
+    entities.splice(index, 1);
+    renderEntities();
+    renderRelationshipSelectors();
+    renderRelationshipList();
+    renderDiagram();
 
- if(!attributes.some(a=>a.primaryKey))
-  return msg("error","Add an ID attribute such as student_id or id.");
-
- entities.push({name,attributes});
- entityNameInput.value="";
- attributesInput.value="";
- renderEntities();
- updateRelationshipInputs();
- renderRelationships();
- renderDiagram();
- msg("success",`${name} added successfully.`);
-};
-
-function renderEntities(){
- if(!entities.length){
-  entityList.innerHTML=`<div class="empty-state">No entities added yet.</div>`;
-  return;
- }
- entityList.innerHTML=entities.map((e,i)=>`
-  <div class="entity-item">
-   <button class="delete-btn" onclick="deleteEntity(${i})">×</button>
-   <strong>${esc(e.name)}</strong>
-   <span>${e.attributes.map(a=>`${esc(a.name)} (${a.type})${a.primaryKey?" 🔑":""}`).join(", ")}</span>
-  </div>`).join("");
+    showValidation("success", `${removed.name} removed.`);
 }
 
-function deleteEntity(i){
- const name=entities[i].name;
- entities.splice(i,1);
- relationships=relationships.filter(r=>r.from!==name&&r.to!==name);
- renderEntities();
- updateRelationshipInputs();
- renderRelationships();
- renderDiagram();
- msg("success",`${name} removed.`);
+function renderRelationshipSelectors() {
+    const selects = document.querySelectorAll(".relationship-entity");
+
+    selects.forEach(select => {
+        const oldValue = select.value;
+
+        select.innerHTML =
+            '<option value="">Select entity</option>' +
+            entities.map(e =>
+                `<option value="${escapeHTML(e.name)}">${escapeHTML(e.name)}</option>`
+            ).join("");
+
+        if (entities.some(e => e.name === oldValue)) {
+            select.value = oldValue;
+        }
+    });
 }
 
-function addRelationship(){
- const from=$("relFrom").value,to=$("relTo").value;
- const name=$("relName").value.trim();
- const card=$("cardinality").value;
+function addRelationship() {
+    const from = document.getElementById("relationshipFrom").value;
+    const to = document.getElementById("relationshipTo").value;
+    const name = document.getElementById("relationshipName").value.trim();
+    const cardinality = document.getElementById("cardinality").value;
 
- if(!from||!to||!name)return msg("error","Complete all relationship fields.");
- if(from===to)return msg("error","Choose two different entities.");
+    if (!from || !to || !name) {
+        showValidation("error", "Select both entities and enter a relationship name.");
+        return;
+    }
 
- relationships.push({from,to,name,card});
- $("relName").value="";
- renderRelationships();
- renderDiagram();
- msg("success",`${name} relationship added.`);
+    if (from === to) {
+        showValidation("error", "Select two different entities.");
+        return;
+    }
+
+    relationships.push({ from, to, name, cardinality });
+
+    document.getElementById("relationshipName").value = "";
+
+    renderRelationshipList();
+    renderDiagram();
+
+    showValidation("success", `${name} relationship added.`);
 }
 
-function renderRelationships(){
- const box=$("relationshipList");
- if(!box)return;
+function renderRelationshipList() {
+    const box = document.getElementById("relationshipList");
+    if (!box) return;
 
- box.innerHTML=relationships.length
- ?relationships.map((r,i)=>`
-  <div class="entity-item">
-   <button class="delete-btn" onclick="deleteRelationship(${i})">×</button>
-   <strong>${esc(r.from)} — ${esc(r.name)} — ${esc(r.to)}</strong>
-   <span>Cardinality: ${r.card}</span>
-  </div>`).join("")
- :`<div class="empty-state">No relationships added yet.</div>`;
+    if (!relationships.length) {
+        box.innerHTML = '<div class="empty-state">No relationships added yet.</div>';
+        return;
+    }
+
+    box.innerHTML = relationships.map((r, i) => `
+        <div class="relationship-item">
+            <span>
+                <strong>${escapeHTML(r.from)}</strong>
+                — ${escapeHTML(r.name)} —
+                <strong>${escapeHTML(r.to)}</strong>
+                <small>${escapeHTML(r.cardinality)}</small>
+            </span>
+            <button onclick="deleteRelationship(${i})">×</button>
+        </div>
+    `).join("");
 }
 
-function deleteRelationship(i){
- relationships.splice(i,1);
- renderRelationships();
- renderDiagram();
+function deleteRelationship(index) {
+    relationships.splice(index, 1);
+    renderRelationshipList();
+    renderDiagram();
 }
 
-function renderDiagram(){
- if(!entities.length){
-  diagramArea.innerHTML=`
-   <div class="diagram-placeholder">
-    <div class="placeholder-icon">◇</div>
-    <h3>Your ER diagram will appear here</h3>
-    <p>Add an entity to begin building your database model.</p>
-   </div>`;
-  return;
- }
+function renderDiagram() {
+    if (!entities.length) {
+        diagramArea.innerHTML = `
+            <div class="diagram-placeholder">
+                <div class="placeholder-icon">◇</div>
+                <h3>Your ER diagram will appear here</h3>
+                <p>Add an entity to begin building your database model.</p>
+            </div>`;
+        return;
+    }
 
- const w=Math.max(900,entities.length*320),h=580;
- let svg=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    const canvas = document.createElement("div");
+    canvas.className = "er-canvas";
 
- relationships.forEach(r=>{
-  const a=entities.findIndex(e=>e.name===r.from);
-  const b=entities.findIndex(e=>e.name===r.to);
-  if(a<0||b<0)return;
+    const entityNodes = {};
 
-  const x1=160+a*320,x2=160+b*320,y=290,mx=(x1+x2)/2;
-  const [c1,c2]=r.card.split(":");
+    entities.forEach((entity, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "er-node";
+        wrapper.dataset.name = entity.name;
 
-  svg+=`
-   <line x1="${x1+85}" y1="${y}" x2="${mx-45}" y2="${y}" stroke="#8c99af" stroke-width="2"/>
-   <line x1="${mx+45}" y1="${y}" x2="${x2-85}" y2="${y}" stroke="#8c99af" stroke-width="2"/>
-   <polygon points="${mx},${y-40} ${mx+48},${y} ${mx},${y+40} ${mx-48},${y}"
-    fill="#11182b" stroke="#e0a84b" stroke-width="2"/>
-   <text x="${mx}" y="${y+4}" text-anchor="middle" fill="white" font-size="11">${esc(r.name)}</text>
-   <text x="${x1+105}" y="${y-15}" fill="#38d39f" font-size="15" font-weight="bold">${c1}</text>
-   <text x="${x2-115}" y="${y-15}" fill="#38d39f" font-size="15" font-weight="bold">${c2}</text>`;
- });
+        const box = document.createElement("div");
+        box.className = "er-entity";
+        box.textContent = entity.name;
 
- entities.forEach((e,i)=>{
-  const x=160+i*320,y=290;
+        wrapper.appendChild(box);
 
-  svg+=`
-   <rect x="${x-85}" y="${y-35}" width="170" height="70" rx="4"
-    fill="#11182b" stroke="#6c8cff" stroke-width="3"/>
-   <text x="${x}" y="${y+6}" text-anchor="middle" fill="white"
-    font-size="18" font-weight="bold">${esc(e.name.toUpperCase())}</text>`;
+        const attrs = document.createElement("div");
+        attrs.className = "er-attributes";
 
-  const pos=[
-   [x,y-135,x,y-100],
-   [x+180,y,x+100,y],
-   [x,y+135,x,y+100],
-   [x-180,y,x-100,y]
-  ];
+        entity.attributes.forEach(attribute => {
+            const oval = document.createElement("div");
+            oval.className = "er-attribute";
+            if (attribute.primaryKey) oval.classList.add("primary-key");
 
-  e.attributes.forEach((a,j)=>{
-   const p=pos[j%4];
+            oval.innerHTML = `
+                <span class="attribute-name">
+                    ${attribute.primaryKey ? "<u>" + escapeHTML(attribute.name) + "</u>" : escapeHTML(attribute.name)}
+                </span>
+                <span class="attribute-type">${attribute.type}</span>
+            `;
 
-   svg+=`
-    <line x1="${p[2]}" y1="${p[3]}" x2="${p[0]}" y2="${p[1]}"
-     stroke="#8c99af" stroke-width="2"/>
-    <ellipse cx="${p[0]}" cy="${p[1]}" rx="75" ry="32"
-     fill="#11182b" stroke="${a.primaryKey?"#38d39f":"#aeb9cc"}" stroke-width="2"/>
-    <text x="${p[0]}" y="${p[1]-2}" text-anchor="middle" fill="white" font-size="12">
-     ${a.primaryKey?`<tspan text-decoration="underline">${esc(a.name)}</tspan>`:esc(a.name)}
-    </text>
-    <text x="${p[0]}" y="${p[1]+13}" text-anchor="middle" fill="#9ba8bd" font-size="9">${a.type}</text>`;
-  });
- });
+            attrs.appendChild(oval);
+        });
 
- svg+="</svg>";
+        wrapper.appendChild(attrs);
+        canvas.appendChild(wrapper);
+        entityNodes[entity.name] = wrapper;
+    });
 
- diagramArea.innerHTML=`
-  <div style="width:100%;height:100%;overflow:auto;display:flex;justify-content:center;align-items:center">
-   ${svg}
-  </div>`;
+    if (entities.length > 1) {
+        const relationshipsLayer = document.createElement("div");
+        relationshipsLayer.className = "relationships-layer";
+
+        relationships.forEach(r => {
+            const rel = document.createElement("div");
+            rel.className = "relationship-node";
+
+            rel.innerHTML = `
+                <div class="cardinality from-cardinality">${cardinalityStart(r.cardinality)}</div>
+                <div class="relationship-diamond">${escapeHTML(r.name)}</div>
+                <div class="cardinality to-cardinality">${cardinalityEnd(r.cardinality)}</div>
+            `;
+
+            relationshipsLayer.appendChild(rel);
+        });
+
+        canvas.appendChild(relationshipsLayer);
+    }
+
+    diagramArea.innerHTML = "";
+    diagramArea.appendChild(canvas);
 }
 
-generateBtn.onclick=()=>{
- if(!entities.length)return msg("error","Add an entity before generating SQL.");
+function cardinalityStart(value) {
+    if (value === "1 : 1") return "1";
+    if (value === "1 : N") return "1";
+    if (value === "N : 1") return "N";
+    return "M";
+}
 
- let sql="";
+function cardinalityEnd(value) {
+    if (value === "1 : 1") return "1";
+    if (value === "1 : N") return "N";
+    if (value === "N : 1") return "1";
+    return "N";
+}
 
- entities.forEach(e=>{
-  sql+=`CREATE TABLE ${sqlName(e.name)} (\n`;
+generateBtn.addEventListener("click", () => {
+    if (!entities.length) {
+        showValidation("error", "Add an entity before generating SQL.");
+        return;
+    }
 
-  e.attributes.forEach((a,i)=>{
-   const type=a.type==="VARCHAR"?"VARCHAR(100)":a.type;
-   sql+=`    ${sqlName(a.name)} ${type}${a.primaryKey?" PRIMARY KEY":""}${i<e.attributes.length-1?",":""}\n`;
-  });
+    let sql = "";
 
-  sql+=");\n\n";
- });
+    entities.forEach(entity => {
+        sql += `CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
 
- relationships.forEach(r=>{
-  if(r.card==="M:N"){
-   const a=entities.find(e=>e.name===r.from);
-   const b=entities.find(e=>e.name===r.to);
-   if(!a||!b)return;
+        entity.attributes.forEach((a, i) => {
+            let type = a.type === "VARCHAR" ? "VARCHAR(100)" : a.type;
+            let line = `    ${sanitizeSQLName(a.name)} ${type}`;
 
-   const pkA=a.attributes.find(x=>x.primaryKey);
-   const pkB=b.attributes.find(x=>x.primaryKey);
-   if(!pkA||!pkB)return;
+            if (a.primaryKey) line += " PRIMARY KEY";
 
-   sql+=`CREATE TABLE ${sqlName(r.name)} (\n`;
-   sql+=`    ${sqlName(pkA.name)} INTEGER,\n`;
-   sql+=`    ${sqlName(pkB.name)} INTEGER,\n`;
-   sql+=`    PRIMARY KEY (${sqlName(pkA.name)}, ${sqlName(pkB.name)})\n`;
-   sql+=");\n\n";
-  }
- });
+            sql += line + (i < entity.attributes.length - 1 ? "," : "") + "\n";
+        });
 
- sqlOutput.textContent=sql.trim();
- msg("success","SQL generated successfully from the ER model.");
-};
+        sql += ");\n\n";
+    });
 
-copyBtn.onclick=async()=>{
- const sql=sqlOutput.textContent;
+    relationships.forEach(r => {
+        const from = entities.find(e => e.name === r.from);
+        const to = entities.find(e => e.name === r.to);
 
- if(!sql||sql.startsWith("--"))
-  return msg("error","Generate SQL first.");
+        if (!from || !to) return;
 
- try{
-  await navigator.clipboard.writeText(sql);
-  copyBtn.textContent="Copied!";
-  setTimeout(()=>copyBtn.textContent="Copy SQL",1500);
- }catch{
-  msg("error","Unable to copy SQL.");
- }
-};
+        if (r.cardinality === "M : N") {
+            const table = sanitizeSQLName(r.name);
+            const fk1 = sanitizeSQLName(from.name) + "_id";
+            const fk2 = sanitizeSQLName(to.name) + "_id";
 
-themeBtn.onclick=()=>{
- document.body.classList.toggle("light");
- themeBtn.textContent=document.body.classList.contains("light")?"☀":"☾";
-};
+            sql += `CREATE TABLE ${table} (\n`;
+            sql += `    ${fk1} INTEGER,\n`;
+            sql += `    ${fk2} INTEGER,\n`;
+            sql += `    PRIMARY KEY (${fk1}, ${fk2})\n`;
+            sql += `);\n\n`;
+        }
+    });
+
+    sqlOutput.textContent = sql.trim();
+
+    showValidation("success", "SQL generated successfully from the ER model.");
+});
+
+copyBtn.addEventListener("click", async () => {
+    const sql = sqlOutput.textContent;
+
+    if (!sql || sql.startsWith("--")) {
+        showValidation("error", "Generate SQL first.");
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(sql);
+        copyBtn.textContent = "Copied!";
+
+        setTimeout(() => {
+            copyBtn.textContent = "Copy SQL";
+        }, 1500);
+    } catch {
+        showValidation("error", "Unable to copy SQL.");
+    }
+});
+
+function showValidation(type, message) {
+    validationBox.innerHTML = `
+        <strong>${type === "error" ? "Validation Error" : "Validation"}</strong>
+        <p>${escapeHTML(message)}</p>
+    `;
+
+    validationBox.className = `validation-box ${type}`;
+}
+
+themeBtn.addEventListener("click", () => {
+    document.body.classList.toggle("light");
+    themeBtn.textContent =
+        document.body.classList.contains("light") ? "☀" : "☾";
+});
+
+function escapeHTML(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function sanitizeSQLName(value) {
+    return value.trim().replace(/[^a-zA-Z0-9_]/g, "_");
+}
 
 renderEntities();
-updateRelationshipInputs();
-renderRelationships();
+renderRelationshipSelectors();
+renderRelationshipList();
 renderDiagram();
