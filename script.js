@@ -26,26 +26,18 @@ addEntityBtn.addEventListener("click", function () {
     const attributesText = attributesInput.value.trim();
 
     if (!name) {
-        showValidation(
-            "error",
-            "Please enter an entity name."
-        );
+        showValidation("error", "Please enter an entity name.");
         return;
     }
 
     if (!attributesText) {
-        showValidation(
-            "error",
-            "Please enter at least one attribute."
-        );
+        showValidation("error", "Please enter at least one attribute.");
         return;
     }
 
-    const duplicate = entities.some(
-        entity => entity.name.toLowerCase() === name.toLowerCase()
-    );
-
-    if (duplicate) {
+    if (entities.some(entity =>
+        entity.name.toLowerCase() === name.toLowerCase()
+    )) {
         showValidation(
             "error",
             "An entity with this name already exists."
@@ -53,15 +45,32 @@ addEntityBtn.addEventListener("click", function () {
         return;
     }
 
-    const attributes = attributesText
-        .split(",")
-        .map(attribute => attribute.trim())
-        .filter(attribute => attribute.length > 0);
+    const attributes = parseAttributes(attributesText);
 
     if (attributes.length === 0) {
         showValidation(
             "error",
-            "Please provide valid attributes."
+            "Please enter valid attributes."
+        );
+        return;
+    }
+
+    const primaryKeys = attributes.filter(
+        attribute => attribute.primaryKey
+    );
+
+    if (primaryKeys.length === 0) {
+        showValidation(
+            "error",
+            "Please mark one attribute as the primary key using :PK."
+        );
+        return;
+    }
+
+    if (primaryKeys.length > 1) {
+        showValidation(
+            "error",
+            "This prototype currently supports one primary key per entity."
         );
         return;
     }
@@ -82,6 +91,50 @@ addEntityBtn.addEventListener("click", function () {
         `${name} was added successfully.`
     );
 });
+
+
+/* =========================
+   PARSE ATTRIBUTES
+========================= */
+
+function parseAttributes(text) {
+
+    return text
+        .split(",")
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => {
+
+            const parts = item.split(":");
+
+            const name = parts[0].trim();
+
+            const type = parts[1]
+                ? parts[1].trim().toUpperCase()
+                : "VARCHAR";
+
+            const primaryKey =
+                parts[2] &&
+                parts[2].trim().toUpperCase() === "PK";
+
+            const allowedTypes = [
+                "INTEGER",
+                "VARCHAR",
+                "TEXT",
+                "DATE",
+                "BOOLEAN",
+                "DECIMAL"
+            ];
+
+            return {
+                name: name,
+                type: allowedTypes.includes(type)
+                    ? type
+                    : "VARCHAR",
+                primaryKey: primaryKey
+            };
+        });
+}
 
 
 /* =========================
@@ -109,6 +162,18 @@ function renderEntities() {
 
         item.className = "entity-item";
 
+        const attributes = entity.attributes
+            .map(attribute => {
+
+                return `
+                    ${attribute.name}
+                    (${attribute.type})
+                    ${attribute.primaryKey ? "🔑" : ""}
+                `;
+
+            })
+            .join(", ");
+
         item.innerHTML = `
             <button
                 class="delete-btn"
@@ -117,12 +182,12 @@ function renderEntities() {
                 ×
             </button>
 
-            <strong>${escapeHTML(entity.name)}</strong>
+            <strong>
+                ${escapeHTML(entity.name)}
+            </strong>
 
             <span>
-                ${entity.attributes
-                    .map(attribute => escapeHTML(attribute))
-                    .join(", ")}
+                ${escapeHTML(attributes)}
             </span>
         `;
 
@@ -191,18 +256,20 @@ function renderDiagram() {
 
         let attributesHTML = "";
 
-        entity.attributes.forEach((attribute, index) => {
-
-            const isPrimaryKey =
-                index === 0;
+        entity.attributes.forEach(attribute => {
 
             attributesHTML += `
                 <div class="diagram-attribute ${
-                    isPrimaryKey ? "pk" : ""
+                    attribute.primaryKey ? "pk" : ""
                 }">
 
-                    ${isPrimaryKey ? "🔑 " : ""}
-                    ${escapeHTML(attribute)}
+                    ${attribute.primaryKey ? "🔑 " : ""}
+
+                    ${escapeHTML(attribute.name)}
+
+                    <span style="opacity:0.6">
+                        ${escapeHTML(attribute.type)}
+                    </span>
 
                 </div>
             `;
@@ -253,19 +320,20 @@ generateBtn.addEventListener("click", function () {
                     ? ""
                     : ",";
 
-            const columnName =
-                sanitizeSQLName(attribute);
+            let sqlType = attribute.type;
 
-            if (index === 0) {
-
-                sql += `    ${columnName} INTEGER PRIMARY KEY${comma}\n`;
-
-            } else {
-
-                sql += `    ${columnName} VARCHAR(100)${comma}\n`;
-
+            if (sqlType === "VARCHAR") {
+                sqlType = "VARCHAR(100)";
             }
 
+            let line =
+                `    ${sanitizeSQLName(attribute.name)} ${sqlType}`;
+
+            if (attribute.primaryKey) {
+                line += " PRIMARY KEY";
+            }
+
+            sql += line + comma + "\n";
         });
 
         sql += `);\n\n`;
@@ -371,19 +439,15 @@ themeBtn.addEventListener("click", function () {
     document.body.classList.toggle("light");
 
     if (document.body.classList.contains("light")) {
-
         themeBtn.textContent = "☀";
-
     } else {
-
         themeBtn.textContent = "☾";
-
     }
 });
 
 
 /* =========================
-   SECURITY / CLEAN INPUT
+   SECURITY
 ========================= */
 
 function escapeHTML(value) {
