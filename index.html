@@ -39,7 +39,7 @@
     </header>
 
 
-    <!-- MAIN DASHBOARD -->
+    <!-- MAIN -->
 
     <main class="dashboard">
 
@@ -70,7 +70,7 @@
                 <input
                     type="text"
                     id="entityName"
-                    placeholder="e.g. Student"
+                    placeholder="Enter entity name"
                 >
 
             </div>
@@ -85,7 +85,7 @@
                 <input
                     type="text"
                     id="attributes"
-                    placeholder="e.g. student_id, name, email"
+                    placeholder="e.g. student_id, name, email, dob"
                 >
 
                 <small>
@@ -135,7 +135,7 @@
 
 
 
-        <!-- VISUALIZATION PANEL -->
+        <!-- ER DIAGRAM -->
 
         <section class="panel visualization-panel">
 
@@ -148,7 +148,7 @@
                     </h2>
 
                     <p>
-                        Live visualization of your entities.
+                        Standard ER notation visualization.
                     </p>
 
                 </div>
@@ -176,10 +176,30 @@
                     </h3>
 
                     <p>
-                        Add entities from the input panel
-                        to begin building your database model.
+                        Add an entity to begin building
+                        your database model.
                     </p>
 
+                </div>
+
+            </div>
+
+
+            <div class="notation-legend">
+
+                <div>
+                    <span class="legend-rectangle"></span>
+                    Entity
+                </div>
+
+                <div>
+                    <span class="legend-oval"></span>
+                    Attribute
+                </div>
+
+                <div>
+                    <span class="legend-diamond"></span>
+                    Relationship
                 </div>
 
             </div>
@@ -190,35 +210,28 @@
                 <div class="flow-step active">
 
                     <span>1</span>
-
                     Entities
 
                 </div>
 
-
                 <div class="flow-arrow">
                     →
                 </div>
-
 
                 <div class="flow-step">
 
                     <span>2</span>
-
                     Relations
 
                 </div>
-
 
                 <div class="flow-arrow">
                     →
                 </div>
 
-
                 <div class="flow-step">
 
                     <span>3</span>
-
                     SQL
 
                 </div>
@@ -229,7 +242,7 @@
 
 
 
-        <!-- EXPLANATION PANEL -->
+        <!-- EXPLANATION -->
 
         <section class="panel explanation-panel">
 
@@ -259,9 +272,9 @@
                     </h3>
 
                     <p>
-                        An Entity-Relationship diagram is a visual
-                        representation of entities, their attributes,
-                        and relationships in a database.
+                        An Entity-Relationship diagram represents
+                        entities, attributes, and relationships
+                        in a database.
                     </p>
 
                 </div>
@@ -278,13 +291,13 @@
                 <div>
 
                     <h3>
-                        Automatic schema inference
+                        Automatic Detection
                     </h3>
 
                     <p>
-                        The prototype analyzes attribute names to
-                        automatically suggest suitable SQL data types
-                        and identify likely primary keys.
+                        The system analyzes attribute names and
+                        automatically suggests suitable SQL data
+                        types and primary keys.
                     </p>
 
                 </div>
@@ -315,9 +328,9 @@
                 </span>
 
                 <p>
-                    Relationships and cardinality → foreign keys →
+                    Relationships → cardinality → foreign keys →
                     step-by-step conversion → AI explanations →
-                    history and report export.
+                    history → report export.
                 </p>
 
             </div>
@@ -345,7 +358,6 @@
                 </p>
 
             </div>
-
 
             <button
                 id="copyBtn"
