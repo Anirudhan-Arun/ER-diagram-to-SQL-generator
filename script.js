@@ -24,7 +24,6 @@ const flowRelations=document.getElementById("flowRelations");
 const flowSql=document.getElementById("flowSql");
 
 let sqlGenerated=false;
-let positions={};
 
 function updateProgress(){
     const hasEntities=entities.length>0;
@@ -45,17 +44,17 @@ function detectPrimaryKey(name){
 function inferDataType(name){
     name=name.toLowerCase().trim();
 
-    if(name==="id"||name.endsWith("_id"))return "INTEGER";
+    if(name==="id"||name.endsWith("_id"))return"INTEGER";
 
-    if(["age","count","quantity","credits","credit","marks","score","year","number","total"].some(x=>name.includes(x)))return "INTEGER";
+    if(["age","count","quantity","credits","credit","marks","score","year","number","total"].some(x=>name.includes(x)))return"INTEGER";
 
-    if(["price","salary","amount","cost","rate","percentage"].some(x=>name.includes(x)))return "DECIMAL";
+    if(["price","salary","amount","cost","rate","percentage"].some(x=>name.includes(x)))return"DECIMAL";
 
-    if(["date","dob","birth","created","updated"].some(x=>name.includes(x)))return "DATE";
+    if(["date","dob","birth","created","updated"].some(x=>name.includes(x)))return"DATE";
 
-    if(["is_","has_","active","enabled"].some(x=>name.includes(x)))return "BOOLEAN";
+    if(["is_","has_","active","enabled"].some(x=>name.includes(x)))return"BOOLEAN";
 
-    return "VARCHAR";
+    return"VARCHAR";
 }
 
 function escapeHTML(value){
@@ -72,8 +71,6 @@ function sanitizeSQLName(value){
 }
 
 function showValidation(type,message){
-    if(!validationBox)return;
-
     validationBox.style.background=type==="error"
         ?"rgba(255,107,122,.08)"
         :"rgba(56,211,159,.08)";
@@ -89,6 +86,10 @@ function showValidation(type,message){
         <p>${escapeHTML(message)}</p>
     `;
 }
+
+/* =========================
+   ADD ENTITY
+========================= */
 
 addEntityBtn.addEventListener("click",()=>{
     const name=entityNameInput.value.trim();
@@ -122,7 +123,10 @@ addEntityBtn.addEventListener("click",()=>{
         return;
     }
 
-    entities.push({name,attributes});
+    entities.push({
+        name,
+        attributes
+    });
 
     entityNameInput.value="";
     attributesInput.value="";
@@ -136,6 +140,10 @@ addEntityBtn.addEventListener("click",()=>{
 
     showValidation("success",`${name} added successfully.`);
 });
+
+/* =========================
+   ENTITY LIST
+========================= */
 
 function renderEntities(){
     if(!entities.length){
@@ -170,8 +178,6 @@ function deleteEntity(index){
         r.from!==removed.name&&r.to!==removed.name
     );
 
-    delete positions[removed.name];
-
     entities.splice(index,1);
 
     renderEntities();
@@ -184,6 +190,10 @@ function deleteEntity(index){
 
     showValidation("success",`${removed.name} removed.`);
 }
+
+/* =========================
+   RELATIONSHIP SELECTORS
+========================= */
 
 function updateRelationshipSelectors(){
     if(!relFrom||!relTo)return;
@@ -211,6 +221,10 @@ function updateRelationshipSelectors(){
     if(entities.some(e=>e.name===oldTo))relTo.value=oldTo;
 }
 
+/* =========================
+   ADD RELATIONSHIP
+========================= */
+
 if(addRelBtn){
     addRelBtn.addEventListener("click",()=>{
         const from=relFrom.value;
@@ -228,18 +242,17 @@ if(addRelBtn){
         }
 
         if(relationships.some(r=>
-            (r.from===from&&r.to===to)||
-            (r.from===to&&r.to===from)
+            r.from===from&&
+            r.to===to
         )){
             showValidation("error","This relationship already exists.");
             return;
         }
 
         relationships.push({
-            from:from,
-            to:to,
-            type:type,
-            name:"teaches"
+            from,
+            to,
+            type
         });
 
         renderRelationshipList();
@@ -248,15 +261,23 @@ if(addRelBtn){
         sqlGenerated=false;
         updateProgress();
 
-        showValidation("success",`${from} → ${to} relationship added.`);
+        showValidation(
+            "success",
+            `${from} ${type} ${to} relationship added.`
+        );
     });
 }
+
+/* =========================
+   RELATIONSHIP LIST
+========================= */
 
 function renderRelationshipList(){
     if(!relationshipList)return;
 
     if(!relationships.length){
-        relationshipList.innerHTML='<div class="empty-state">No relationships added yet.</div>';
+        relationshipList.innerHTML=
+            '<div class="empty-state">No relationships added yet.</div>';
         return;
     }
 
@@ -272,6 +293,7 @@ function renderRelationshipList(){
                 → ${escapeHTML(r.to)}
                 (${escapeHTML(r.type)})
             </span>
+
             <button onclick="deleteRelationship(${i})">×</button>
         `;
 
@@ -281,12 +303,73 @@ function renderRelationshipList(){
 
 function deleteRelationship(index){
     relationships.splice(index,1);
+
     renderRelationshipList();
     renderDiagram();
 
     sqlGenerated=false;
     updateProgress();
 }
+
+/* =========================
+   DRAGGING
+========================= */
+
+function makeDraggable(element,onMove){
+    let dragging=false;
+    let startX=0;
+    let startY=0;
+    let originalX=0;
+    let originalY=0;
+
+    element.addEventListener("pointerdown",e=>{
+        if(e.target.closest("button"))return;
+
+        dragging=true;
+
+        element.setPointerCapture(e.pointerId);
+
+        startX=e.clientX;
+        startY=e.clientY;
+
+        originalX=parseFloat(element.dataset.x||0);
+        originalY=parseFloat(element.dataset.y||0);
+
+        element.style.cursor="grabbing";
+        e.preventDefault();
+    });
+
+    element.addEventListener("pointermove",e=>{
+        if(!dragging)return;
+
+        const dx=e.clientX-startX;
+        const dy=e.clientY-startY;
+
+        const x=originalX+dx;
+        const y=originalY+dy;
+
+        element.dataset.x=x;
+        element.dataset.y=y;
+
+        element.style.transform=`translate(${x}px,${y}px)`;
+
+        if(onMove)onMove();
+    });
+
+    element.addEventListener("pointerup",()=>{
+        dragging=false;
+        element.style.cursor="grab";
+    });
+
+    element.addEventListener("pointercancel",()=>{
+        dragging=false;
+        element.style.cursor="grab";
+    });
+}
+
+/* =========================
+   ER DIAGRAM
+========================= */
 
 function renderDiagram(){
     if(!entities.length){
@@ -304,16 +387,16 @@ function renderDiagram(){
 
     const canvas=document.createElement("div");
     canvas.className="er-canvas";
-    canvas.style.position="relative";
-    canvas.style.minWidth="900px";
-    canvas.style.minHeight="650px";
+
+    /* SVG layer for relationship lines */
 
     const svg=document.createElementNS(
         "http://www.w3.org/2000/svg",
         "svg"
     );
 
-    svg.classList.add("relationship-layer");
+    svg.classList.add("relationship-lines");
+
     svg.style.position="absolute";
     svg.style.left="0";
     svg.style.top="0";
@@ -324,35 +407,53 @@ function renderDiagram(){
 
     canvas.appendChild(svg);
 
-    const entityElements={};
+    const positions={};
+
+    /* =========================
+       ENTITIES
+    ========================= */
 
     entities.forEach((entity,index)=>{
-        if(!positions[entity.name]){
-            positions[entity.name]={
-                x:100+(index%2)*400,
-                y:120+Math.floor(index/2)*280
-            };
-        }
-
         const wrapper=document.createElement("div");
+
         wrapper.className="er-entity-wrapper";
+
+        const defaultX=
+            index%2===0
+                ? -230
+                : 230;
+
+        const defaultY=
+            Math.floor(index/2)*250;
+
+        wrapper.dataset.x=defaultX;
+        wrapper.dataset.y=defaultY;
+
+        wrapper.style.transform=
+            `translate(${defaultX}px,${defaultY}px)`;
+
+        wrapper.style.cursor="grab";
         wrapper.style.position="absolute";
-        wrapper.style.left=positions[entity.name].x+"px";
-        wrapper.style.top=positions[entity.name].y+"px";
-        wrapper.style.width="190px";
-        wrapper.style.height="160px";
+
+        /* ENTITY RECTANGLE */
 
         const entityBox=document.createElement("div");
+
         entityBox.className="er-entity";
         entityBox.textContent=entity.name;
 
         wrapper.appendChild(entityBox);
 
+        /* ATTRIBUTES */
+
         entity.attributes.forEach((attribute,index)=>{
             const attributeWrapper=document.createElement("div");
-            attributeWrapper.className="er-attribute-wrapper";
+
+            attributeWrapper.className=
+                "er-attribute-wrapper";
 
             const attributeOval=document.createElement("div");
+
             attributeOval.className="er-attribute";
 
             if(attribute.primaryKey){
@@ -361,10 +462,13 @@ function renderDiagram(){
 
             attributeOval.innerHTML=`
                 <span class="attribute-name">
-                    ${attribute.primaryKey
-                        ? `<u>${escapeHTML(attribute.name)}</u>`
-                        : escapeHTML(attribute.name)}
+                    ${
+                        attribute.primaryKey
+                            ? `<u>${escapeHTML(attribute.name)}</u>`
+                            : escapeHTML(attribute.name)
+                    }
                 </span>
+
                 <span class="attribute-type">
                     ${escapeHTML(attribute.type)}
                 </span>
@@ -384,322 +488,524 @@ function renderDiagram(){
             ];
 
             attributeWrapper.classList.add(
-                positionsList[index%positionsList.length]
+                positionsList[index%4]
             );
+
+            /* Make attributes draggable */
+
+            attributeWrapper.dataset.x=0;
+            attributeWrapper.dataset.y=0;
+
+            makeDraggable(attributeWrapper,()=>{
+                drawAttributeLine(
+                    wrapper,
+                    attributeWrapper,
+                    line
+                );
+            });
 
             wrapper.appendChild(attributeWrapper);
         });
 
-        makeDraggable(
-            wrapper,
-            entity.name,
-            canvas,
-            ()=>{
-                drawRelationships(
-                    svg,
-                    canvas,
-                    entityElements
-                );
-            }
-        );
-
         canvas.appendChild(wrapper);
-        entityElements[entity.name]=wrapper;
+
+        positions[entity.name]={
+            element:wrapper,
+            x:defaultX,
+            y:defaultY
+        };
+
+        /* Entity draggable */
+
+        makeDraggable(wrapper,()=>{
+            drawAllRelationships();
+        });
     });
 
-    diagramArea.appendChild(canvas);
+    /* =========================
+       RELATIONSHIPS
+    ========================= */
 
-    requestAnimationFrame(()=>{
-        drawRelationships(svg,canvas,entityElements);
-    });
-}
+    function drawAllRelationships(){
+        svg.innerHTML="";
 
-function makeDraggable(element,name,canvas,onMove){
-    let dragging=false;
-    let startX=0;
-    let startY=0;
-    let originalX=0;
-    let originalY=0;
-
-    element.addEventListener("mousedown",e=>{
-        if(e.target.closest(".er-attribute-wrapper"))return;
-
-        dragging=true;
-        startX=e.clientX;
-        startY=e.clientY;
-
-        originalX=positions[name].x;
-        originalY=positions[name].y;
-
-        element.style.cursor="grabbing";
-
-        e.preventDefault();
-    });
-
-    document.addEventListener("mousemove",e=>{
-        if(!dragging)return;
-
-        let newX=originalX+(e.clientX-startX);
-        let newY=originalY+(e.clientY-startY);
-
-        newX=Math.max(20,newX);
-        newY=Math.max(20,newY);
-
-        positions[name].x=newX;
-        positions[name].y=newY;
-
-        element.style.left=newX+"px";
-        element.style.top=newY+"px";
-
-        onMove();
-    });
-
-    document.addEventListener("mouseup",()=>{
-        if(!dragging)return;
-
-        dragging=false;
-        element.style.cursor="grab";
-    });
-
-    element.style.cursor="grab";
-}
-
-function drawRelationships(svg,canvas,entityElements){
-    while(svg.firstChild){
-        svg.removeChild(svg.firstChild);
+        relationships.forEach((relationship,index)=>{
+            drawRelationship(
+                relationship,
+                index
+            );
+        });
     }
 
-    relationships.forEach(relationship=>{
-        const fromEl=entityElements[relationship.from];
-        const toEl=entityElements[relationship.to];
+    function drawRelationship(relationship,index){
+        const fromPosition=positions[relationship.from];
+        const toPosition=positions[relationship.to];
 
-        if(!fromEl||!toEl)return;
+        if(!fromPosition||!toPosition)return;
 
-        const fromX=positions[relationship.from].x;
-        const fromY=positions[relationship.from].y;
-        const toX=positions[relationship.to].x;
-        const toY=positions[relationship.to].y;
+        const fromEl=fromPosition.element;
+        const toEl=toPosition.element;
 
-        const width=190;
-        const height=160;
+        const fromX=
+            fromEl.offsetLeft+
+            fromEl.offsetWidth/2+
+            parseFloat(fromEl.dataset.x||0);
 
-        const x1=fromX+width/2;
-        const y1=fromY+height/2;
-        const x2=toX+width/2;
-        const y2=toY+height/2;
+        const fromY=
+            fromEl.offsetTop+
+            fromEl.offsetHeight/2+
+            parseFloat(fromEl.dataset.y||0);
 
-        const dx=x2-x1;
-        const dy=y2-y1;
-        const distance=Math.sqrt(dx*dx+dy*dy);
+        const toX=
+            toEl.offsetLeft+
+            toEl.offsetWidth/2+
+            parseFloat(toEl.dataset.x||0);
 
-        if(distance<1)return;
+        const toY=
+            toEl.offsetTop+
+            toEl.offsetHeight/2+
+            parseFloat(toEl.dataset.y||0);
+
+        const dx=toX-fromX;
+        const dy=toY-fromY;
+
+        const distance=Math.sqrt(dx*dx+dy*dy)||1;
 
         const ux=dx/distance;
         const uy=dy/distance;
 
-        const startX=x1+ux*95;
-        const startY=y1+uy*80;
+        const entityDistance=95;
 
-        const endX=x2-ux*95;
-        const endY=y2-uy*80;
+        const startX=
+            fromX+
+            ux*entityDistance;
 
-        const midX=(startX+endX)/2;
-        const midY=(startY+endY)/2;
+        const startY=
+            fromY+
+            uy*entityDistance;
 
-        const ns="http://www.w3.org/2000/svg";
+        const endX=
+            toX-
+            ux*entityDistance;
 
-        /* LINE FROM FIRST ENTITY TO DIAMOND */
+        const endY=
+            toY-
+            uy*entityDistance;
 
-        const line1=document.createElementNS(ns,"line");
+        const middleX=(startX+endX)/2;
+        const middleY=(startY+endY)/2;
+
+        const diamondSize=35;
+
+        const px=-uy;
+        const py=ux;
+
+        /* Left diamond point */
+
+        const p1=
+            `${middleX-diamondSize},${middleY}`;
+
+        /* Top */
+
+        const p2=
+            `${middleX},${middleY-diamondSize/2}`;
+
+        /* Right */
+
+        const p3=
+            `${middleX+diamondSize},${middleY}`;
+
+        /* Bottom */
+
+        const p4=
+            `${middleX},${middleY+diamondSize/2}`;
+
+        /* First relationship line */
+
+        const line1=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "line"
+        );
 
         line1.setAttribute("x1",startX);
         line1.setAttribute("y1",startY);
-        line1.setAttribute("x2",midX-ux*30);
-        line1.setAttribute("y2",midY-uy*30);
+
+        line1.setAttribute(
+            "x2",
+            middleX-diamondSize
+        );
+
+        line1.setAttribute(
+            "y2",
+            middleY
+        );
+
         line1.setAttribute("stroke","#8c99af");
         line1.setAttribute("stroke-width","2");
 
         svg.appendChild(line1);
 
-        /* LINE FROM DIAMOND TO SECOND ENTITY */
+        /* Second relationship line */
 
-        const line2=document.createElementNS(ns,"line");
+        const line2=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "line"
+        );
 
-        line2.setAttribute("x1",midX+ux*30);
-        line2.setAttribute("y1",midY+uy*30);
+        line2.setAttribute(
+            "x1",
+            middleX+diamondSize
+        );
+
+        line2.setAttribute(
+            "y1",
+            middleY
+        );
+
         line2.setAttribute("x2",endX);
         line2.setAttribute("y2",endY);
+
         line2.setAttribute("stroke","#8c99af");
         line2.setAttribute("stroke-width","2");
 
         svg.appendChild(line2);
 
-        /* DIAMOND */
+        /* Diamond */
 
-        const diamond=document.createElementNS(ns,"polygon");
-
-        const size=28;
+        const diamond=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "polygon"
+        );
 
         diamond.setAttribute(
             "points",
-            `${midX},${midY-size} `+
-            `${midX+size},${midY} `+
-            `${midX},${midY+size} `+
-            `${midX-size},${midY}`
+            `${p1} ${p2} ${p3} ${p4}`
         );
 
-        diamond.setAttribute("fill","#11182b");
-        diamond.setAttribute("stroke","#38d39f");
-        diamond.setAttribute("stroke-width","2");
+        diamond.setAttribute(
+            "fill",
+            "var(--panel)"
+        );
+
+        diamond.setAttribute(
+            "stroke",
+            "#38d39f"
+        );
+
+        diamond.setAttribute(
+            "stroke-width",
+            "2"
+        );
 
         svg.appendChild(diamond);
 
-        /* RELATIONSHIP NAME */
+        /* Relationship name */
 
-        const relationText=document.createElementNS(ns,"text");
+        const relationshipText=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+        );
 
-        relationText.setAttribute("x",midX);
-        relationText.setAttribute("y",midY+4);
-        relationText.setAttribute("text-anchor","middle");
-        relationText.setAttribute("fill","#f4f7fb");
-        relationText.setAttribute("font-size","10");
-        relationText.setAttribute("font-weight","700");
-
-        relationText.textContent=relationship.name||"relates";
-
-        svg.appendChild(relationText);
-
-        /* FIRST CARDINALITY */
-
-        const fromCard=document.createElementNS(ns,"text");
-
-        fromCard.setAttribute(
+        relationshipText.setAttribute(
             "x",
-            startX+ux*35
+            middleX
         );
 
-        fromCard.setAttribute(
+        relationshipText.setAttribute(
             "y",
-            startY+uy*35-10
+            middleY+4
         );
 
-        fromCard.setAttribute(
+        relationshipText.setAttribute(
             "text-anchor",
             "middle"
         );
 
-        fromCard.setAttribute(
+        relationshipText.setAttribute(
             "fill",
-            "#ffffff"
+            "currentColor"
         );
 
-        fromCard.setAttribute(
+        relationshipText.setAttribute(
             "font-size",
-            "16"
+            "11"
         );
 
-        fromCard.setAttribute(
+        relationshipText.setAttribute(
             "font-weight",
-            "800"
+            "600"
         );
 
-        fromCard.setAttribute(
-            "stroke",
-            "#11182b"
-        );
+        relationshipText.textContent=
+            getRelationshipName(relationship);
 
-        fromCard.setAttribute(
-            "stroke-width",
-            "4"
-        );
+        svg.appendChild(relationshipText);
 
-        fromCard.setAttribute(
-            "paint-order",
-            "stroke"
-        );
+        /* =========================
+           CARDINALITY LABELS
+        ========================= */
 
-        fromCard.textContent=getFromCardinality(
-            relationship.type
-        );
+        const cardinalities=
+            getCardinalities(
+                relationship.type
+            );
 
-        svg.appendChild(fromCard);
+        const offset=18;
 
-        /* SECOND CARDINALITY */
+        const fromCardinality=
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "text"
+            );
 
-        const toCard=document.createElementNS(ns,"text");
-
-        toCard.setAttribute(
+        fromCardinality.setAttribute(
             "x",
-            endX-ux*35
+            startX+
+            px*offset
         );
 
-        toCard.setAttribute(
+        fromCardinality.setAttribute(
             "y",
-            endY-uy*35-10
+            startY+
+            py*offset-5
         );
 
-        toCard.setAttribute(
+        fromCardinality.setAttribute(
             "text-anchor",
             "middle"
         );
 
-        toCard.setAttribute(
+        fromCardinality.setAttribute(
             "fill",
-            "#ffffff"
+            "currentColor"
         );
 
-        toCard.setAttribute(
+        fromCardinality.setAttribute(
             "font-size",
-            "16"
+            "14"
         );
 
-        toCard.setAttribute(
+        fromCardinality.setAttribute(
             "font-weight",
-            "800"
+            "700"
         );
 
-        toCard.setAttribute(
-            "stroke",
-            "#11182b"
+        fromCardinality.textContent=
+            cardinalities.from;
+
+        svg.appendChild(fromCardinality);
+
+        const toCardinality=
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "text"
+            );
+
+        toCardinality.setAttribute(
+            "x",
+            endX+
+            px*offset
         );
 
-        toCard.setAttribute(
-            "stroke-width",
-            "4"
+        toCardinality.setAttribute(
+            "y",
+            endY+
+            py*offset-5
         );
 
-        toCard.setAttribute(
-            "paint-order",
-            "stroke"
+        toCardinality.setAttribute(
+            "text-anchor",
+            "middle"
         );
 
-        toCard.textContent=getToCardinality(
-            relationship.type
+        toCardinality.setAttribute(
+            "fill",
+            "currentColor"
         );
 
-        svg.appendChild(toCard);
-    });
-}
+        toCardinality.setAttribute(
+            "font-size",
+            "14"
+        );
 
-function getFromCardinality(type){
-    switch(type){
-        case "1 : 1":return "1";
-        case "1 : N":return "1";
-        case "N : 1":return "N";
-        case "M : N":return "M";
-        default:return "";
+        toCardinality.setAttribute(
+            "font-weight",
+            "700"
+        );
+
+        toCardinality.textContent=
+            cardinalities.to;
+
+        svg.appendChild(toCardinality);
+
+        /* =========================
+           DRAGGABLE RELATIONSHIP
+        ========================= */
+
+        const hitArea=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "circle"
+        );
+
+        hitArea.setAttribute(
+            "cx",
+            middleX
+        );
+
+        hitArea.setAttribute(
+            "cy",
+            middleY
+        );
+
+        hitArea.setAttribute(
+            "r",
+            "35"
+        );
+
+        hitArea.setAttribute(
+            "fill",
+            "transparent"
+        );
+
+        hitArea.style.pointerEvents="all";
+        hitArea.style.cursor="grab";
+
+        svg.appendChild(hitArea);
+
+        makeRelationshipDraggable(
+            hitArea,
+            relationship
+        );
     }
+
+    function makeRelationshipDraggable(
+        element,
+        relationship
+    ){
+        let dragging=false;
+        let startX=0;
+        let startY=0;
+
+        element.addEventListener(
+            "pointerdown",
+            e=>{
+                dragging=true;
+                startX=e.clientX;
+                startY=e.clientY;
+                element.setPointerCapture(
+                    e.pointerId
+                );
+                e.preventDefault();
+            }
+        );
+
+        element.addEventListener(
+            "pointermove",
+            e=>{
+                if(!dragging)return;
+
+                const dx=e.clientX-startX;
+                const dy=e.clientY-startY;
+
+                relationship.offsetX=
+                    (relationship.offsetX||0)+dx;
+
+                relationship.offsetY=
+                    (relationship.offsetY||0)+dy;
+
+                startX=e.clientX;
+                startY=e.clientY;
+
+                drawAllRelationships();
+            }
+        );
+
+        element.addEventListener(
+            "pointerup",
+            ()=>{
+                dragging=false;
+            }
+        );
+    }
+
+    /* Draw relationships after entities exist */
+
+    setTimeout(()=>{
+        drawAllRelationships();
+    },50);
+
+    diagramArea.appendChild(canvas);
 }
 
-function getToCardinality(type){
-    switch(type){
-        case "1 : 1":return "1";
-        case "1 : N":return "N";
-        case "N : 1":return "1";
-        case "M : N":return "N";
-        default:return "";
-    }
+/* =========================
+   ATTRIBUTE LINES
+========================= */
+
+function drawAttributeLine(
+    entityWrapper,
+    attributeWrapper,
+    line
+){
+    /* Existing CSS handles these lines.
+       This function exists so attribute dragging
+       remains functional without changing the
+       existing diagram logic. */
 }
+
+/* =========================
+   RELATIONSHIP NAME
+========================= */
+
+function getRelationshipName(relationship){
+    if(relationship.name){
+        return relationship.name;
+    }
+
+    return "RELATES";
+}
+
+/* =========================
+   CARDINALITY
+========================= */
+
+function getCardinalities(type){
+    if(type==="1:1"){
+        return{
+            from:"1",
+            to:"1"
+        };
+    }
+
+    if(type==="1:N"){
+        return{
+            from:"1",
+            to:"N"
+        };
+    }
+
+    if(type==="N:1"){
+        return{
+            from:"N",
+            to:"1"
+        };
+    }
+
+    if(type==="M:N"){
+        return{
+            from:"M",
+            to:"N"
+        };
+    }
+
+    return{
+        from:"",
+        to:""
+    };
+}
+
+/* =========================
+   GENERATE SQL
+========================= */
 
 generateBtn.addEventListener("click",()=>{
     if(!entities.length){
@@ -715,66 +1021,74 @@ generateBtn.addEventListener("click",()=>{
     entities.forEach(entity=>{
         sql+=`CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
 
-        entity.attributes.forEach((attribute,index)=>{
-            let type=attribute.type;
+        entity.attributes.forEach(
+            (attribute,index)=>{
+                let type=attribute.type;
 
-            if(type==="VARCHAR"){
-                type="VARCHAR(100)";
+                if(type==="VARCHAR"){
+                    type="VARCHAR(100)";
+                }
+
+                let line=
+                    `    ${sanitizeSQLName(attribute.name)} ${type}`;
+
+                if(attribute.primaryKey){
+                    line+=" PRIMARY KEY";
+                }
+
+                if(index<entity.attributes.length-1){
+                    line+=",";
+                }
+
+                sql+=line+"\n";
             }
-
-            let line=
-                `    ${sanitizeSQLName(attribute.name)} ${type}`;
-
-            if(attribute.primaryKey){
-                line+=" PRIMARY KEY";
-            }
-
-            if(index<entity.attributes.length-1){
-                line+=",";
-            }
-
-            sql+=line+"\n";
-        });
+        );
 
         sql+=");\n\n";
     });
 
-    if(relationships.length){
-        relationships.forEach(r=>{
-            const from=entities.find(e=>e.name===r.from);
-            const to=entities.find(e=>e.name===r.to);
+    /* =========================
+       RELATIONSHIP TABLES
+    ========================= */
 
-            if(!from||!to)return;
+    relationships.forEach(relationship=>{
+        const from=entities.find(
+            e=>e.name===relationship.from
+        );
 
-            const fromPK=from.attributes.find(a=>a.primaryKey);
-            const toPK=to.attributes.find(a=>a.primaryKey);
+        const to=entities.find(
+            e=>e.name===relationship.to
+        );
 
-            if(!fromPK||!toPK)return;
+        if(!from||!to)return;
 
-            if(r.type==="M : N"){
-                const tableName=
-                    `${sanitizeSQLName(r.from)}_${sanitizeSQLName(r.to)}`;
+        const fromPK=
+            from.attributes.find(
+                a=>a.primaryKey
+            );
 
-                sql+=`CREATE TABLE ${tableName} (\n`;
-                sql+=`    ${sanitizeSQLName(fromPK.name)} INTEGER,\n`;
-                sql+=`    ${sanitizeSQLName(toPK.name)} INTEGER,\n`;
-                sql+=`    PRIMARY KEY (${sanitizeSQLName(fromPK.name)}, ${sanitizeSQLName(toPK.name)})\n`;
-                sql+=`);\n\n`;
-            }
-            else if(r.type==="1 : N"){
-                sql+=`-- Relationship: ${r.name||"teaches"} (${r.from} 1 : N ${r.to})\n`;
-                sql+=`ALTER TABLE ${sanitizeSQLName(r.to)} ADD COLUMN ${sanitizeSQLName(r.from)}_${sanitizeSQLName(fromPK.name)} INTEGER;\n\n`;
-            }
-            else if(r.type==="N : 1"){
-                sql+=`-- Relationship: ${r.name||"teaches"} (${r.from} N : 1 ${r.to})\n`;
-                sql+=`ALTER TABLE ${sanitizeSQLName(r.from)} ADD COLUMN ${sanitizeSQLName(r.to)}_${sanitizeSQLName(toPK.name)} INTEGER;\n\n`;
-            }
-            else if(r.type==="1 : 1"){
-                sql+=`-- Relationship: ${r.name||"teaches"} (${r.from} 1 : 1 ${r.to})\n`;
-                sql+=`ALTER TABLE ${sanitizeSQLName(r.to)} ADD COLUMN ${sanitizeSQLName(r.from)}_${sanitizeSQLName(fromPK.name)} INTEGER;\n\n`;
-            }
-        });
-    }
+        const toPK=
+            to.attributes.find(
+                a=>a.primaryKey
+            );
+
+        if(!fromPK||!toPK)return;
+
+        const type=relationship.type;
+
+        if(type==="M:N"){
+            const tableName=
+                sanitizeSQLName(
+                    getRelationshipName(relationship)
+                );
+
+            sql+=`CREATE TABLE ${tableName} (\n`;
+            sql+=`    ${sanitizeSQLName(from.name)}_${sanitizeSQLName(fromPK.name)} INTEGER,\n`;
+            sql+=`    ${sanitizeSQLName(to.name)}_${sanitizeSQLName(toPK.name)} INTEGER,\n`;
+            sql+=`    PRIMARY KEY (${sanitizeSQLName(from.name)}_${sanitizeSQLName(fromPK.name)}, ${sanitizeSQLName(to.name)}_${sanitizeSQLName(toPK.name)})\n`;
+            sql+=`);\n\n`;
+        }
+    });
 
     sqlOutput.textContent=sql.trim();
 
@@ -783,45 +1097,66 @@ generateBtn.addEventListener("click",()=>{
 
     showValidation(
         "success",
-        relationships.length
-            ?"SQL generated successfully including the relationships."
-            :"SQL generated successfully from the ER model."
+        "SQL generated successfully from the ER model."
     );
 });
 
-copyBtn.addEventListener("click",async()=>{
-    const sql=sqlOutput.textContent;
+/* =========================
+   COPY SQL
+========================= */
 
-    if(!sql||sql==="-- Generated SQL will appear here."){
-        showValidation("error","Generate SQL first.");
-        return;
+copyBtn.addEventListener(
+    "click",
+    async()=>{
+        const sql=sqlOutput.textContent;
+
+        if(
+            !sql||
+            sql==="-- Generated SQL will appear here."
+        ){
+            showValidation(
+                "error",
+                "Generate SQL first."
+            );
+            return;
+        }
+
+        try{
+            await navigator.clipboard.writeText(sql);
+
+            copyBtn.textContent="Copied!";
+
+            setTimeout(()=>{
+                copyBtn.textContent="Copy SQL";
+            },1500);
+
+        }catch{
+            showValidation(
+                "error",
+                "Unable to copy SQL."
+            );
+        }
     }
+);
 
-    try{
-        await navigator.clipboard.writeText(sql);
-        copyBtn.textContent="Copied!";
+/* =========================
+   THEME
+========================= */
 
-        setTimeout(()=>{
-            copyBtn.textContent="Copy SQL";
-        },1500);
-    }
-    catch{
-        showValidation("error","Unable to copy SQL.");
-    }
-});
+themeBtn.addEventListener("click",()=>{
+    document.body.classList.toggle("light");
 
-if(themeBtn){
-    themeBtn.addEventListener("click",()=>{
-        document.body.classList.toggle("light");
-
-        themeBtn.textContent=
-            document.body.classList.contains("light")
+    themeBtn.textContent=
+        document.body.classList.contains("light")
             ?"☀"
             :"☾";
-    });
-}
+});
+
+/* =========================
+   INITIALIZATION
+========================= */
 
 updateRelationshipSelectors();
-updateProgress();
 renderEntities();
 renderRelationshipList();
+updateProgress();
