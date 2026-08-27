@@ -1,1 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>ER → SQL Generator</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="topbar">
+        <div class="logo">
+            <span>ER</span> → SQL Generator
+        </div>
+
+        <div class="header-right">
+            <span class="status">
+                ● Prototype
+            </span>
+
+            <button id="themeBtn" class="theme-btn">
+                ☾
+            </button>
+        </div>
+    </header>
+
+
+    <main class="dashboard">
+
+        <!-- LEFT PANEL -->
+        <section class="panel input-panel">
+
+            <div class="panel-title">
+                <h2>ER Diagram Input</h2>
+                <p>Define entities and their attributes.</p>
+            </div>
+
+            <div class="form-group">
+
+                <label for="entityName">
+                    Entity Name
+                </label>
+
+                <input
+                    type="text"
+                    id="entityName"
+                    placeholder="e.g. Student"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="attributes">
+                    Attributes
+                </label>
+
+                <input
+                    type="text"
+                    id="attributes"
+                    placeholder="e.g. student_id, name, email"
+                >
+
+                <small>
+                    Separate attributes using commas.
+                </small>
+
+            </div>
+
+
+            <button id="addEntityBtn" class="primary-btn">
+                + Add Entity
+            </button>
+
+
+            <div class="entity-list-section">
+
+                <h3>Entities</h3>
+
+                <div id="entityList" class="entity-list">
+
+                    <div class="empty-state">
+                        No entities added yet.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <button id="generateBtn" class="generate-btn">
+                Generate SQL →
+            </button>
+
+        </section>
+
+
+
+        <!-- CENTER PANEL -->
+        <section class="panel visualization-panel">
+
+            <div class="panel-title">
+
+                <div>
+                    <h2>ER Diagram</h2>
+                    <p>Live visualization of your entities.</p>
+                </div>
+
+                <span class="step-badge">
+                    Step 1
+                </span>
+
+            </div>
+
+
+            <div id="diagramArea" class="diagram-area">
+
+                <div class="diagram-placeholder">
+
+                    <div class="placeholder-icon">
+                        ◇
+                    </div>
+
+                    <h3>Your ER diagram will appear here</h3>
+
+                    <p>
+                        Add entities from the input panel
+                        to begin building your database model.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="conversion-flow">
+
+                <div class="flow-step active">
+                    <span>1</span>
+                    Entities
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step">
+                    <span>2</span>
+                    Relations
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step">
+                    <span>3</span>
+                    SQL
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- RIGHT PANEL -->
+        <section class="panel explanation-panel">
+
+            <div class="panel-title">
+
+                <h2>Explanation</h2>
+
+                <span class="ai-badge">
+                    AI Ready
+                </span>
+
+            </div>
+
+
+            <div class="explanation-card">
+
+                <div class="info-icon">
+                    i
+                </div>
+
+                <div>
+
+                    <h3>What is an ER Diagram?</h3>
+
+                    <p>
+                        An Entity-Relationship diagram is a visual
+                        representation of entities, their attributes,
+                        and relationships in a database.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="explanation-card">
+
+                <div class="info-icon">
+                    →
+                </div>
+
+                <div>
+
+                    <h3>How conversion works</h3>
+
+                    <p>
+                        Entities are converted into relational tables.
+                        Their attributes become columns and a selected
+                        identifier becomes the primary key.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div id="validationBox" class="validation-box">
+
+                <strong>Validation</strong>
+
+                <p>
+                    Add at least one entity to begin.
+                </p>
+
+            </div>
+
+
+            <div class="future-feature">
+
+                <span>COMING NEXT</span>
+
+                <p>
+                    Relationships, foreign keys, step-by-step
+                    conversion, AI explanations and report export.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- SQL OUTPUT -->
+
+    <section class="sql-section">
+
+        <div class="sql-header">
+
+            <div>
+                <h2>Generated SQL</h2>
+                <p>
+                    SQL statements generated from your ER model.
+                </p>
+            </div>
+
+            <button id="copyBtn" class="secondary-btn">
+                Copy SQL
+            </button>
+
+        </div>
+
+
+        <pre id="sqlOutput"><code>-- Generated SQL will appear here.</code></pre>
+
+    </section>
+
+
+
+    <footer>
+
+        <p>
+            ER → SQL Generator · DBMS Module 1 · Interactive Learning Tool
+        </p>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
