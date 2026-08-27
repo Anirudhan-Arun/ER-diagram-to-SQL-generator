@@ -1,942 +1,179 @@
-let entities = [];
-
-
-/* =========================================
-   ELEMENTS
-========================================= */
-
-const entityNameInput =
-    document.getElementById("entityName");
-
-const attributesInput =
-    document.getElementById("attributes");
-
-const addEntityBtn =
-    document.getElementById("addEntityBtn");
-
-const generateBtn =
-    document.getElementById("generateBtn");
-
-const entityList =
-    document.getElementById("entityList");
-
-const diagramArea =
-    document.getElementById("diagramArea");
-
-const sqlOutput =
-    document.getElementById("sqlOutput");
-
-const validationBox =
-    document.getElementById("validationBox");
-
-const copyBtn =
-    document.getElementById("copyBtn");
-
-const themeBtn =
-    document.getElementById("themeBtn");
-
-
-/* =========================================
-   ADD ENTITY
-========================================= */
-
-addEntityBtn.addEventListener(
-    "click",
-    function () {
-
-        const entityName =
-            entityNameInput.value.trim();
-
-        const attributeText =
-            attributesInput.value.trim();
-
-
-        if (entityName === "") {
-
-            showValidation(
-                "error",
-                "Please enter an entity name."
-            );
-
-            return;
-        }
-
-
-        if (attributeText === "") {
-
-            showValidation(
-                "error",
-                "Please enter at least one attribute."
-            );
-
-            return;
-        }
-
-
-        /* Duplicate check */
-
-        const duplicate =
-            entities.some(
-                entity =>
-                    entity.name.toLowerCase() ===
-                    entityName.toLowerCase()
-            );
-
-
-        if (duplicate) {
-
-            showValidation(
-                "error",
-                "This entity already exists."
-            );
-
-            return;
-        }
-
-
-        /* Read attributes */
-
-        const attributeNames =
-            attributeText
-                .split(",")
-                .map(
-                    attribute =>
-                        attribute.trim()
-                )
-                .filter(
-                    attribute =>
-                        attribute !== ""
-                );
-
-
-        if (attributeNames.length === 0) {
-
-            showValidation(
-                "error",
-                "Please enter valid attributes."
-            );
-
-            return;
-        }
-
-
-        /* Create attributes */
-
-        const attributes =
-            attributeNames.map(
-                attributeName => {
-
-                    return {
-
-                        name: attributeName,
-
-                        type:
-                            inferDataType(
-                                attributeName
-                            ),
-
-                        primaryKey:
-                            detectPrimaryKey(
-                                attributeName
-                            )
-
-                    };
-
-                }
-            );
-
-
-        /* Ensure a primary key */
-
-        const hasPrimaryKey =
-            attributes.some(
-                attribute =>
-                    attribute.primaryKey
-            );
-
-
-        if (!hasPrimaryKey) {
-
-            showValidation(
-                "error",
-                "No primary key was detected. Add an attribute such as student_id or id."
-            );
-
-            return;
-        }
-
-
-        /* Save */
-
-        entities.push({
-
-            name: entityName,
-
-            attributes: attributes
-
-        });
-
-
-        /* Clear fields */
-
-        entityNameInput.value = "";
-
-        attributesInput.value = "";
-
-
-        /* Update UI */
-
-        renderEntities();
-
-        renderDiagram();
-
-
-        showValidation(
-            "success",
-            `${entityName} added successfully.`
-        );
-
-    }
-);
-
-
-/* =========================================
-   PRIMARY KEY DETECTION
-========================================= */
-
-function detectPrimaryKey(attributeName) {
-
-    const name =
-        attributeName
-            .toLowerCase()
-            .trim();
-
-
-    return (
-        name === "id" ||
-        name.endsWith("_id")
-    );
+let entities=[],relationships=[];
+
+const $=id=>document.getElementById(id);
+const entityNameInput=$("entityName"),attributesInput=$("attributes");
+const addEntityBtn=$("addEntityBtn"),generateBtn=$("generateBtn");
+const entityList=$("entityList"),diagramArea=$("diagramArea");
+const sqlOutput=$("sqlOutput"),validationBox=$("validationBox");
+const copyBtn=$("copyBtn"),themeBtn=$("themeBtn");
+
+function typeOf(n){
+ n=n.toLowerCase();
+ if(n==="id"||n.endsWith("_id"))return"INTEGER";
+ if(/age|count|quantity|credit|mark|score|year|number|total/.test(n))return"INTEGER";
+ if(/price|salary|amount|cost|rate|percentage/.test(n))return"DECIMAL";
+ if(/date|dob|birth|created|updated/.test(n))return"DATE";
+ if(/is_|has_|active|enabled/.test(n))return"BOOLEAN";
+ return"VARCHAR";
+}
+function isPK(n){n=n.toLowerCase();return n==="id"||n.endsWith("_id");}
+function esc(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
+function sqlName(s){return s.trim().replace(/[^a-zA-Z0-9_]/g,"_");}
+function msg(type,text){
+ validationBox.innerHTML=`<strong>${type==="error"?"Validation Error":"Validation"}</strong><p>${esc(text)}</p>`;
 }
 
+addEntityBtn.onclick=()=>{
+ const name=entityNameInput.value.trim(),text=attributesInput.value.trim();
+ if(!name)return msg("error","Enter an entity name.");
+ if(!text)return msg("error","Enter at least one attribute.");
+ if(entities.some(e=>e.name.toLowerCase()===name.toLowerCase()))return msg("error","This entity already exists.");
 
-/* =========================================
-   DATA TYPE DETECTION
-========================================= */
+ const attributes=text.split(",").map(x=>x.trim()).filter(Boolean).map(name=>({
+  name,type:typeOf(name),primaryKey:isPK(name)
+ }));
+ if(!attributes.some(a=>a.primaryKey))return msg("error","Add an ID attribute such as student_id or id.");
 
-function inferDataType(attributeName) {
+ entities.push({name,attributes});
+ entityNameInput.value="";attributesInput.value="";
+ renderEntities();renderDiagram();
+ msg("success",`${name} added successfully.`);
+};
 
-    const name =
-        attributeName
-            .toLowerCase()
-            .trim();
-
-
-    /* ID */
-
-    if (
-        name === "id" ||
-        name.endsWith("_id")
-    ) {
-
-        return "INTEGER";
-
-    }
-
-
-    /* Integer */
-
-    const integerWords = [
-
-        "age",
-        "count",
-        "quantity",
-        "credits",
-        "credit",
-        "marks",
-        "score",
-        "year",
-        "number",
-        "total"
-
-    ];
-
-
-    if (
-        integerWords.some(
-            word =>
-                name === word ||
-                name.includes(word)
-        )
-    ) {
-
-        return "INTEGER";
-
-    }
-
-
-    /* Decimal */
-
-    const decimalWords = [
-
-        "price",
-        "salary",
-        "amount",
-        "cost",
-        "rate",
-        "percentage"
-
-    ];
-
-
-    if (
-        decimalWords.some(
-            word =>
-                name.includes(word)
-        )
-    ) {
-
-        return "DECIMAL";
-
-    }
-
-
-    /* Date */
-
-    const dateWords = [
-
-        "date",
-        "dob",
-        "birth",
-        "created",
-        "updated"
-
-    ];
-
-
-    if (
-        dateWords.some(
-            word =>
-                name.includes(word)
-        )
-    ) {
-
-        return "DATE";
-
-    }
-
-
-    /* Boolean */
-
-    const booleanWords = [
-
-        "is_",
-        "has_",
-        "active",
-        "enabled"
-
-    ];
-
-
-    if (
-        booleanWords.some(
-            word =>
-                name.includes(word)
-        )
-    ) {
-
-        return "BOOLEAN";
-
-    }
-
-
-    /* Default */
-
-    return "VARCHAR";
+function renderEntities(){
+ if(!entities.length){
+  entityList.innerHTML=`<div class="empty-state">No entities added yet.</div>`;
+  return;
+ }
+ entityList.innerHTML=entities.map((e,i)=>`
+  <div class="entity-item">
+   <button class="delete-btn" onclick="deleteEntity(${i})">×</button>
+   <strong>${esc(e.name)}</strong>
+   <span>${e.attributes.map(a=>`${esc(a.name)} (${a.type})${a.primaryKey?" 🔑":""}`).join(", ")}</span>
+  </div>`).join("");
 }
 
-
-/* =========================================
-   ENTITY LIST
-========================================= */
-
-function renderEntities() {
-
-    if (entities.length === 0) {
-
-        entityList.innerHTML = `
-
-            <div class="empty-state">
-                No entities added yet.
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    entityList.innerHTML = "";
-
-
-    entities.forEach(
-        (entity, index) => {
-
-            const item =
-                document.createElement("div");
-
-            item.className =
-                "entity-item";
-
-
-            const attributes =
-                entity.attributes
-                    .map(
-                        attribute => {
-
-                            return `${
-                                attribute.name
-                            } (${
-                                attribute.type
-                            })${
-                                attribute.primaryKey
-                                    ? " 🔑"
-                                    : ""
-                            }`;
-
-                        }
-                    )
-                    .join(", ");
-
-
-            item.innerHTML = `
-
-                <button
-                    class="delete-btn"
-                    onclick="deleteEntity(${index})"
-                >
-                    ×
-                </button>
-
-                <strong>
-                    ${escapeHTML(entity.name)}
-                </strong>
-
-                <span>
-                    ${escapeHTML(attributes)}
-                </span>
-
-            `;
-
-
-            entityList.appendChild(item);
-
-        }
-    );
+function deleteEntity(i){
+ const name=entities[i].name;
+ entities.splice(i,1);
+ relationships=relationships.filter(r=>r.from!==name&&r.to!==name);
+ renderEntities();renderDiagram();
+ msg("success",`${name} removed.`);
 }
 
-
-/* =========================================
-   DELETE ENTITY
-========================================= */
-
-function deleteEntity(index) {
-
-    const removed =
-        entities[index];
-
-
-    entities.splice(index, 1);
-
-
-    renderEntities();
-
-    renderDiagram();
-
-
-    showValidation(
-        "success",
-        `${removed.name} removed.`
-    );
+/* RELATIONSHIPS */
+function addRelationship(){
+ const from=$("relFrom").value,to=$("relTo").value;
+ const name=$("relName").value.trim(),card=$("cardinality").value;
+ if(!from||!to||!name)return msg("error","Complete all relationship fields.");
+ if(from===to)return msg("error","Choose two different entities.");
+ if(relationships.some(r=>r.from===from&&r.to===to&&r.name.toLowerCase()===name.toLowerCase()))
+  return msg("error","This relationship already exists.");
+ relationships.push({from,to,name,card});
+ renderDiagram();renderRelationships();
+ msg("success",`${name} relationship added.`);
 }
 
-
-/* =========================================
-   ER DIAGRAM
-========================================= */
-
-function renderDiagram() {
-
-    if (entities.length === 0) {
-
-        diagramArea.innerHTML = `
-
-            <div class="diagram-placeholder">
-
-                <div class="placeholder-icon">
-                    ◇
-                </div>
-
-                <h3>
-                    Your ER diagram will appear here
-                </h3>
-
-                <p>
-                    Add an entity to begin building
-                    your database model.
-                </p>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    diagramArea.innerHTML = "";
-
-
-    const canvas =
-        document.createElement("div");
-
-    canvas.className =
-        "er-canvas";
-
-
-    entities.forEach(
-        entity => {
-
-            const wrapper =
-                document.createElement("div");
-
-            wrapper.className =
-                "er-entity-wrapper";
-
-
-            /* ENTITY RECTANGLE */
-
-            const entityBox =
-                document.createElement("div");
-
-            entityBox.className =
-                "er-entity";
-
-            entityBox.textContent =
-                entity.name;
-
-
-            wrapper.appendChild(
-                entityBox
-            );
-
-
-            /* ATTRIBUTES */
-
-            entity.attributes.forEach(
-                (attribute, index) => {
-
-                    const attributeWrapper =
-                        document.createElement("div");
-
-                    attributeWrapper.className =
-                        "er-attribute-wrapper";
-
-
-                    const attributeOval =
-                        document.createElement("div");
-
-                    attributeOval.className =
-                        "er-attribute";
-
-
-                    if (
-                        attribute.primaryKey
-                    ) {
-
-                        attributeOval.classList.add(
-                            "primary-key"
-                        );
-
-                    }
-
-
-                    attributeOval.innerHTML = `
-
-                        <span class="attribute-name">
-
-                            ${
-                                attribute.primaryKey
-                                    ? `<u>${escapeHTML(attribute.name)}</u>`
-                                    : escapeHTML(attribute.name)
-                            }
-
-                        </span>
-
-                        <span class="attribute-type">
-
-                            ${escapeHTML(attribute.type)}
-
-                        </span>
-
-                    `;
-
-
-                    const line =
-                        document.createElement("div");
-
-                    line.className =
-                        "er-line";
-
-
-                    attributeWrapper.appendChild(
-                        attributeOval
-                    );
-
-                    attributeWrapper.appendChild(
-                        line
-                    );
-
-
-                    const positions = [
-
-                        "attribute-top",
-
-                        "attribute-right",
-
-                        "attribute-bottom",
-
-                        "attribute-left"
-
-                    ];
-
-
-                    attributeWrapper.classList.add(
-
-                        positions[
-                            index %
-                            positions.length
-                        ]
-
-                    );
-
-
-                    wrapper.appendChild(
-                        attributeWrapper
-                    );
-
-                }
-            );
-
-
-            canvas.appendChild(
-                wrapper
-            );
-
-        }
-    );
-
-
-    diagramArea.appendChild(
-        canvas
-    );
+function renderRelationships(){
+ const box=$("relationshipList");
+ if(!box)return;
+ box.innerHTML=relationships.length?relationships.map((r,i)=>`
+  <div class="entity-item">
+   <button class="delete-btn" onclick="deleteRelationship(${i})">×</button>
+   <strong>${esc(r.from)} — ${esc(r.name)} — ${esc(r.to)}</strong>
+   <span>Cardinality: ${r.card}</span>
+  </div>`).join(""):`<div class="empty-state">No relationships added yet.</div>`;
 }
 
-
-/* =========================================
-   GENERATE SQL
-========================================= */
-
-generateBtn.addEventListener(
-    "click",
-    function () {
-
-        if (entities.length === 0) {
-
-            showValidation(
-                "error",
-                "Add an entity before generating SQL."
-            );
-
-            return;
-        }
-
-
-        let sql = "";
-
-
-        entities.forEach(
-            entity => {
-
-                sql +=
-                    `CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
-
-
-                entity.attributes.forEach(
-                    (attribute, index) => {
-
-                        let type =
-                            attribute.type;
-
-
-                        if (
-                            type === "VARCHAR"
-                        ) {
-
-                            type =
-                                "VARCHAR(100)";
-
-                        }
-
-
-                        let line =
-                            `    ${sanitizeSQLName(attribute.name)} ${type}`;
-
-
-                        if (
-                            attribute.primaryKey
-                        ) {
-
-                            line +=
-                                " PRIMARY KEY";
-
-                        }
-
-
-                        if (
-                            index <
-                            entity.attributes.length - 1
-                        ) {
-
-                            line += ",";
-
-                        }
-
-
-                        sql +=
-                            line + "\n";
-
-                    }
-                );
-
-
-                sql +=
-                    ");\n\n";
-
-            }
-        );
-
-
-        sqlOutput.textContent =
-            sql.trim();
-
-
-        showValidation(
-            "success",
-            "SQL generated successfully from the ER model."
-        );
-
-    }
-);
-
-
-/* =========================================
-   COPY SQL
-========================================= */
-
-copyBtn.addEventListener(
-    "click",
-    async function () {
-
-        const sql =
-            sqlOutput.textContent;
-
-
-        if (
-            !sql ||
-            sql ===
-            "-- Generated SQL will appear here."
-        ) {
-
-            showValidation(
-                "error",
-                "Generate SQL first."
-            );
-
-            return;
-        }
-
-
-        try {
-
-            await navigator.clipboard.writeText(
-                sql
-            );
-
-
-            copyBtn.textContent =
-                "Copied!";
-
-
-            setTimeout(
-                () => {
-
-                    copyBtn.textContent =
-                        "Copy SQL";
-
-                },
-                1500
-            );
-
-
-        } catch {
-
-            showValidation(
-                "error",
-                "Unable to copy SQL."
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================
-   VALIDATION
-========================================= */
-
-function showValidation(
-    type,
-    message
-) {
-
-    if (type === "error") {
-
-        validationBox.style.background =
-            "rgba(255, 107, 122, 0.08)";
-
-        validationBox.style.borderColor =
-            "rgba(255, 107, 122, 0.3)";
-
-
-        validationBox.innerHTML = `
-
-            <strong
-                style="color: var(--danger)"
-            >
-                Validation Error
-            </strong>
-
-            <p>
-                ${escapeHTML(message)}
-            </p>
-
-        `;
-
-    } else {
-
-        validationBox.style.background =
-            "rgba(56, 211, 159, 0.08)";
-
-        validationBox.style.borderColor =
-            "rgba(56, 211, 159, 0.3)";
-
-
-        validationBox.innerHTML = `
-
-            <strong>
-                Validation
-            </strong>
-
-            <p>
-                ${escapeHTML(message)}
-            </p>
-
-        `;
-
-    }
-
+function deleteRelationship(i){
+ relationships.splice(i,1);renderRelationships();renderDiagram();
 }
 
+/* DIAGRAM */
+function renderDiagram(){
+ if(!entities.length){
+  diagramArea.innerHTML=`<div class="diagram-placeholder"><div class="placeholder-icon">◇</div><h3>Your ER diagram will appear here</h3><p>Add an entity to begin building your database model.</p></div>`;
+  return;
+ }
 
-/* =========================================
-   THEME
-========================================= */
+ const w=Math.max(800,entities.length*320),h=560;
+ let svg=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
 
-themeBtn.addEventListener(
-    "click",
-    function () {
+ /* relationship lines first */
+ relationships.forEach(r=>{
+  const a=entities.findIndex(e=>e.name===r.from),b=entities.findIndex(e=>e.name===r.to);
+  if(a<0||b<0)return;
+  const x1=160+a*320,x2=160+b*320,y=280,mx=(x1+x2)/2;
+  svg+=`
+   <line x1="${x1+85}" y1="${y}" x2="${mx-45}" y2="${y}" stroke="#8c99af" stroke-width="2"/>
+   <line x1="${mx+45}" y1="${y}" x2="${x2-85}" y2="${y}" stroke="#8c99af" stroke-width="2"/>
+   <polygon points="${mx},${y-38} ${mx+45},${y} ${mx},${y+38} ${mx-45},${y}" fill="#11182b" stroke="#e0a84b" stroke-width="2"/>
+   <text x="${mx}" y="${y+5}" text-anchor="middle" fill="white" font-size="11" font-weight="bold">${esc(r.name)}</text>
+   <text x="${x1+105}" y="${y-12}" fill="#38d39f" font-size="14" font-weight="bold">${r.card.split(":")[0]}</text>
+   <text x="${x2-115}" y="${y-12}" fill="#38d39f" font-size="14" font-weight="bold">${r.card.split(":")[1]}</text>`;
+ });
 
-        document.body.classList.toggle(
-            "light"
-        );
+ entities.forEach((e,i)=>{
+  const x=160+i*320,y=280;
+  svg+=`
+   <rect x="${x-85}" y="${y-35}" width="170" height="70" rx="4" fill="#11182b" stroke="#6c8cff" stroke-width="3"/>
+   <text x="${x}" y="${y+6}" text-anchor="middle" fill="white" font-size="18" font-weight="bold">${esc(e.name.toUpperCase())}</text>`;
 
+  const pos=[
+   [x,y-135,x,y-100],
+   [x+180,y,x+100,y],
+   [x,y+135,x,y+100],
+   [x-180,y,x-100,y]
+  ];
 
-        if (
-            document.body.classList.contains(
-                "light"
-            )
-        ) {
-
-            themeBtn.textContent =
-                "☀";
-
-        } else {
-
-            themeBtn.textContent =
-                "☾";
-
-        }
-
-    }
-);
-
-
-/* =========================================
-   HTML ESCAPING
-========================================= */
-
-function escapeHTML(value) {
-
-    return String(value)
-
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+  e.attributes.forEach((a,j)=>{
+   const p=pos[j%4],vertical=p[0]===p[2];
+   svg+=`
+    <line x1="${p[2]}" y1="${p[3]}" x2="${p[0]}" y2="${p[1]}" stroke="#8c99af" stroke-width="2"/>
+    <ellipse cx="${p[0]}" cy="${p[1]}" rx="75" ry="32" fill="#11182b" stroke="${a.primaryKey?"#38d39f":"#aeb9cc"}" stroke-width="2"/>
+    <text x="${p[0]}" y="${p[1]-2}" text-anchor="middle" fill="white" font-size="12">${a.primaryKey?`<tspan text-decoration="underline">${esc(a.name)}</tspan>`:esc(a.name)}</text>
+    <text x="${p[0]}" y="${p[1]+13}" text-anchor="middle" fill="#9ba8bd" font-size="9">${a.type}</text>`;
+  });
+ });
+ svg+="</svg>";
+ diagramArea.innerHTML=`<div style="width:100%;height:100%;overflow:auto;display:flex;justify-content:center;align-items:center">${svg}</div>`;
 }
 
+/* SQL */
+generateBtn.onclick=()=>{
+ if(!entities.length)return msg("error","Add an entity before generating SQL.");
+ let sql="";
+ entities.forEach(e=>{
+  sql+=`CREATE TABLE ${sqlName(e.name)} (\n`;
+  e.attributes.forEach((a,i)=>{
+   let t=a.type==="VARCHAR"?"VARCHAR(100)":a.type;
+   sql+=`    ${sqlName(a.name)} ${t}${a.primaryKey?" PRIMARY KEY":""}${i<e.attributes.length-1?",":""}\n`;
+  });
+  sql+=");\n\n";
+ });
 
-/* =========================================
-   SQL NAME CLEANING
-========================================= */
+ relationships.forEach(r=>{
+  if(r.card==="M:N"){
+   const a=entities.find(e=>e.name===r.from),b=entities.find(e=>e.name===r.to);
+   const pkA=a.attributes.find(x=>x.primaryKey),pkB=b.attributes.find(x=>x.primaryKey);
+   sql+=`CREATE TABLE ${sqlName(r.name)} (\n    ${sqlName(pkA.name)} INTEGER,\n    ${sqlName(pkB.name)} INTEGER,\n    PRIMARY KEY (${sqlName(pkA.name)}, ${sqlName(pkB.name)})\n);\n\n`;
+  }
+ });
 
-function sanitizeSQLName(value) {
+ sqlOutput.textContent=sql.trim();
+ msg("success","SQL generated successfully from the ER model.");
+};
 
-    return value
-        .trim()
-        .replace(
-            /[^a-zA-Z0-9_]/g,
-            "_"
-        );
-}
+copyBtn.onclick=async()=>{
+ const sql=sqlOutput.textContent;
+ if(!sql||sql.startsWith("--"))return msg("error","Generate SQL first.");
+ try{await navigator.clipboard.writeText(sql);copyBtn.textContent="Copied!";setTimeout(()=>copyBtn.textContent="Copy SQL",1500);}
+ catch{msg("error","Unable to copy SQL.");}
+};
+
+themeBtn.onclick=()=>{
+ document.body.classList.toggle("light");
+ themeBtn.textContent=document.body.classList.contains("light")?"☀":"☾";
+};
+
+renderEntities();renderDiagram();
