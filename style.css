@@ -167,10 +167,10 @@ button{font-family:inherit}
     height:100%;
     display:flex;
     flex-wrap:wrap;
-    align-content:center;
-    justify-content:center;
+    align-content:safe center;
+    justify-content:safe center;
     gap:180px;
-    padding:100px 180px;
+    padding:140px 180px;
 }
 
 /* ENTITY */
