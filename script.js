@@ -1,19 +1,39 @@
 let entities = [];
 
-const entityNameInput = document.getElementById("entityName");
-const attributesInput = document.getElementById("attributes");
 
-const addEntityBtn = document.getElementById("addEntityBtn");
-const generateBtn = document.getElementById("generateBtn");
+/* =========================
+   ELEMENTS
+========================= */
 
-const entityList = document.getElementById("entityList");
-const diagramArea = document.getElementById("diagramArea");
+const entityNameInput =
+    document.getElementById("entityName");
 
-const sqlOutput = document.getElementById("sqlOutput");
-const validationBox = document.getElementById("validationBox");
+const attributesInput =
+    document.getElementById("attributes");
 
-const copyBtn = document.getElementById("copyBtn");
-const themeBtn = document.getElementById("themeBtn");
+const addEntityBtn =
+    document.getElementById("addEntityBtn");
+
+const generateBtn =
+    document.getElementById("generateBtn");
+
+const entityList =
+    document.getElementById("entityList");
+
+const diagramArea =
+    document.getElementById("diagramArea");
+
+const sqlOutput =
+    document.getElementById("sqlOutput");
+
+const validationBox =
+    document.getElementById("validationBox");
+
+const copyBtn =
+    document.getElementById("copyBtn");
+
+const themeBtn =
+    document.getElementById("themeBtn");
 
 
 /* =========================
@@ -22,123 +42,302 @@ const themeBtn = document.getElementById("themeBtn");
 
 addEntityBtn.addEventListener("click", function () {
 
-    const name = entityNameInput.value.trim();
-    const attributesText = attributesInput.value.trim();
+    const entityName =
+        entityNameInput.value.trim();
 
-    if (!name) {
-        showValidation("error", "Please enter an entity name.");
+    const attributeText =
+        attributesInput.value.trim();
+
+
+    if (entityName === "") {
+
+        showValidation(
+            "error",
+            "Please enter an entity name."
+        );
+
         return;
     }
 
-    if (!attributesText) {
-        showValidation("error", "Please enter at least one attribute.");
+
+    if (attributeText === "") {
+
+        showValidation(
+            "error",
+            "Please enter at least one attribute."
+        );
+
         return;
     }
 
-    if (entities.some(entity =>
-        entity.name.toLowerCase() === name.toLowerCase()
-    )) {
+
+    /* Duplicate entity validation */
+
+    const duplicate =
+        entities.some(
+            entity =>
+                entity.name.toLowerCase() ===
+                entityName.toLowerCase()
+        );
+
+
+    if (duplicate) {
+
         showValidation(
             "error",
             "An entity with this name already exists."
         );
+
         return;
     }
 
-    const attributes = parseAttributes(attributesText);
 
-    if (attributes.length === 0) {
+    /* Convert text into attributes */
+
+    const attributeNames =
+        attributeText
+            .split(",")
+            .map(attribute => attribute.trim())
+            .filter(attribute => attribute !== "");
+
+
+    if (attributeNames.length === 0) {
+
         showValidation(
             "error",
             "Please enter valid attributes."
         );
+
         return;
     }
 
-    const primaryKeys = attributes.filter(
-        attribute => attribute.primaryKey
-    );
 
-    if (primaryKeys.length === 0) {
-        showValidation(
-            "error",
-            "Please mark one attribute as the primary key using :PK."
+    /* Create attribute objects */
+
+    const attributes =
+        attributeNames.map(
+            attributeName => {
+
+                return {
+
+                    name: attributeName,
+
+                    type:
+                        inferDataType(
+                            attributeName
+                        ),
+
+                    primaryKey:
+                        detectPrimaryKey(
+                            attributeName
+                        )
+
+                };
+
+            }
         );
-        return;
-    }
 
-    if (primaryKeys.length > 1) {
-        showValidation(
-            "error",
-            "This prototype currently supports one primary key per entity."
-        );
-        return;
-    }
+
+    /* Add entity */
 
     entities.push({
-        name: name,
+
+        name: entityName,
+
         attributes: attributes
+
     });
+
+
+    /* Clear input */
 
     entityNameInput.value = "";
     attributesInput.value = "";
 
+
+    /* Update interface */
+
     renderEntities();
+
     renderDiagram();
+
 
     showValidation(
         "success",
-        `${name} was added successfully.`
+        `${entityName} added successfully. Data types and primary key were inferred automatically.`
     );
+
 });
 
 
 /* =========================
-   PARSE ATTRIBUTES
+   PRIMARY KEY DETECTION
 ========================= */
 
-function parseAttributes(text) {
+function detectPrimaryKey(attributeName) {
 
-    return text
-        .split(",")
-        .map(item => item.trim())
-        .filter(item => item.length > 0)
-        .map(item => {
+    const name =
+        attributeName
+            .toLowerCase()
+            .trim();
 
-            const parts = item.split(":");
 
-            const name = parts[0].trim();
+    /*
+       Examples detected:
 
-            const type = parts[1]
-                ? parts[1].trim().toUpperCase()
-                : "VARCHAR";
+       student_id
+       course_id
+       employee_id
+       id
+    */
 
-            const primaryKey =
-                parts[2] &&
-                parts[2].trim().toUpperCase() === "PK";
-
-            const allowedTypes = [
-                "INTEGER",
-                "VARCHAR",
-                "TEXT",
-                "DATE",
-                "BOOLEAN",
-                "DECIMAL"
-            ];
-
-            return {
-                name: name,
-                type: allowedTypes.includes(type)
-                    ? type
-                    : "VARCHAR",
-                primaryKey: primaryKey
-            };
-        });
+    return (
+        name === "id" ||
+        name.endsWith("_id") ||
+        name.endsWith("id")
+    );
 }
 
 
 /* =========================
-   DISPLAY ENTITY LIST
+   DATA TYPE INFERENCE
+========================= */
+
+function inferDataType(attributeName) {
+
+    const name =
+        attributeName
+            .toLowerCase()
+            .trim();
+
+
+    /* IDs */
+
+    if (
+        name === "id" ||
+        name.endsWith("_id") ||
+        name.endsWith("id")
+    ) {
+
+        return "INTEGER";
+
+    }
+
+
+    /* Integer-like attributes */
+
+    const integerWords = [
+
+        "age",
+        "count",
+        "quantity",
+        "credits",
+        "credit",
+        "marks",
+        "score",
+        "year",
+        "number",
+        "total"
+
+    ];
+
+
+    if (
+        integerWords.some(
+            word =>
+                name === word ||
+                name.includes(word)
+        )
+    ) {
+
+        return "INTEGER";
+
+    }
+
+
+    /* Decimal-like attributes */
+
+    const decimalWords = [
+
+        "price",
+        "salary",
+        "amount",
+        "cost",
+        "rate",
+        "percentage"
+
+    ];
+
+
+    if (
+        decimalWords.some(
+            word =>
+                name.includes(word)
+        )
+    ) {
+
+        return "DECIMAL";
+
+    }
+
+
+    /* Date-like attributes */
+
+    const dateWords = [
+
+        "date",
+        "dob",
+        "birth",
+        "created",
+        "updated"
+
+    ];
+
+
+    if (
+        dateWords.some(
+            word =>
+                name.includes(word)
+        )
+    ) {
+
+        return "DATE";
+
+    }
+
+
+    /* Boolean-like attributes */
+
+    const booleanWords = [
+
+        "is_",
+        "has_",
+        "active",
+        "enabled"
+
+    ];
+
+
+    if (
+        booleanWords.some(
+            word =>
+                name.includes(word)
+        )
+    ) {
+
+        return "BOOLEAN";
+
+    }
+
+
+    /* Default */
+
+    return "VARCHAR";
+}
+
+
+/* =========================
+   DISPLAY ENTITIES
 ========================= */
 
 function renderEntities() {
@@ -154,45 +353,60 @@ function renderEntities() {
         return;
     }
 
+
     entityList.innerHTML = "";
 
-    entities.forEach((entity, index) => {
 
-        const item = document.createElement("div");
+    entities.forEach(
+        (entity, index) => {
 
-        item.className = "entity-item";
+            const item =
+                document.createElement("div");
 
-        const attributes = entity.attributes
-            .map(attribute => {
+            item.className =
+                "entity-item";
 
-                return `
-                    ${attribute.name}
-                    (${attribute.type})
-                    ${attribute.primaryKey ? "🔑" : ""}
-                `;
 
-            })
-            .join(", ");
+            const attributeText =
+                entity.attributes
+                    .map(
+                        attribute => {
 
-        item.innerHTML = `
-            <button
-                class="delete-btn"
-                onclick="deleteEntity(${index})"
-            >
-                ×
-            </button>
+                            return `${attribute.name} (${attribute.type})${
+                                attribute.primaryKey
+                                    ? " 🔑"
+                                    : ""
+                            }`;
 
-            <strong>
-                ${escapeHTML(entity.name)}
-            </strong>
+                        }
+                    )
+                    .join(", ");
 
-            <span>
-                ${escapeHTML(attributes)}
-            </span>
-        `;
 
-        entityList.appendChild(item);
-    });
+            item.innerHTML = `
+
+                <button
+                    class="delete-btn"
+                    onclick="deleteEntity(${index})"
+                >
+                    ×
+                </button>
+
+                <strong>
+                    ${escapeHTML(entity.name)}
+                </strong>
+
+                <span>
+                    ${escapeHTML(attributeText)}
+                </span>
+
+            `;
+
+
+            entityList.appendChild(item);
+
+        }
+    );
 }
 
 
@@ -202,16 +416,21 @@ function renderEntities() {
 
 function deleteEntity(index) {
 
-    const removed = entities[index];
+    const removedEntity =
+        entities[index];
+
 
     entities.splice(index, 1);
 
+
     renderEntities();
+
     renderDiagram();
+
 
     showValidation(
         "success",
-        `${removed.name} was removed.`
+        `${removedEntity.name} was removed.`
     );
 }
 
@@ -225,13 +444,16 @@ function renderDiagram() {
     if (entities.length === 0) {
 
         diagramArea.innerHTML = `
+
             <div class="diagram-placeholder">
 
                 <div class="placeholder-icon">
                     ◇
                 </div>
 
-                <h3>Your ER diagram will appear here</h3>
+                <h3>
+                    Your ER diagram will appear here
+                </h3>
 
                 <p>
                     Add entities from the input panel
@@ -239,54 +461,83 @@ function renderDiagram() {
                 </p>
 
             </div>
+
         `;
 
         return;
     }
 
-    const container = document.createElement("div");
 
-    container.className = "diagram-container";
+    const container =
+        document.createElement("div");
 
-    entities.forEach(entity => {
+    container.className =
+        "diagram-container";
 
-        const entityBox = document.createElement("div");
 
-        entityBox.className = "diagram-entity";
+    entities.forEach(
+        entity => {
 
-        let attributesHTML = "";
+            const entityBox =
+                document.createElement("div");
 
-        entity.attributes.forEach(attribute => {
+            entityBox.className =
+                "diagram-entity";
 
-            attributesHTML += `
-                <div class="diagram-attribute ${
-                    attribute.primaryKey ? "pk" : ""
-                }">
 
-                    ${attribute.primaryKey ? "🔑 " : ""}
+            let attributesHTML = "";
 
-                    ${escapeHTML(attribute.name)}
 
-                    <span style="opacity:0.6">
-                        ${escapeHTML(attribute.type)}
-                    </span>
+            entity.attributes.forEach(
+                attribute => {
 
+                    attributesHTML += `
+
+                        <div class="diagram-attribute ${
+                            attribute.primaryKey
+                                ? "pk"
+                                : ""
+                        }">
+
+                            ${
+                                attribute.primaryKey
+                                    ? "🔑 "
+                                    : ""
+                            }
+
+                            ${escapeHTML(attribute.name)}
+
+                            <span style="opacity:0.6">
+                                ${escapeHTML(attribute.type)}
+                            </span>
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+
+            entityBox.innerHTML = `
+
+                <div class="diagram-entity-title">
+                    ${escapeHTML(entity.name)}
                 </div>
+
+                ${attributesHTML}
+
             `;
-        });
 
-        entityBox.innerHTML = `
-            <div class="diagram-entity-title">
-                ${escapeHTML(entity.name)}
-            </div>
 
-            ${attributesHTML}
-        `;
+            container.appendChild(entityBox);
 
-        container.appendChild(entityBox);
-    });
+        }
+    );
+
 
     diagramArea.innerHTML = "";
+
     diagramArea.appendChild(container);
 }
 
@@ -295,105 +546,167 @@ function renderDiagram() {
    GENERATE SQL
 ========================= */
 
-generateBtn.addEventListener("click", function () {
+generateBtn.addEventListener(
+    "click",
+    function () {
 
-    if (entities.length === 0) {
+        if (entities.length === 0) {
 
-        showValidation(
-            "error",
-            "Add at least one entity before generating SQL."
+            showValidation(
+                "error",
+                "Add at least one entity before generating SQL."
+            );
+
+            return;
+        }
+
+
+        let sql = "";
+
+
+        entities.forEach(
+            entity => {
+
+                sql +=
+                    `CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
+
+
+                entity.attributes.forEach(
+                    (attribute, index) => {
+
+                        let sqlType =
+                            attribute.type;
+
+
+                        if (
+                            sqlType === "VARCHAR"
+                        ) {
+
+                            sqlType =
+                                "VARCHAR(100)";
+
+                        }
+
+
+                        let line =
+                            `    ${sanitizeSQLName(attribute.name)} ${sqlType}`;
+
+
+                        if (
+                            attribute.primaryKey
+                        ) {
+
+                            line +=
+                                " PRIMARY KEY";
+
+                        }
+
+
+                        if (
+                            index <
+                            entity.attributes.length - 1
+                        ) {
+
+                            line += ",";
+
+                        }
+
+
+                        sql +=
+                            line + "\n";
+
+                    }
+                );
+
+
+                sql +=
+                    ");\n\n";
+
+            }
         );
 
-        return;
+
+        sqlOutput.textContent =
+            sql.trim();
+
+
+        showValidation(
+            "success",
+            "SQL generated successfully from the ER model."
+        );
+
     }
-
-    let sql = "";
-
-    entities.forEach(entity => {
-
-        sql += `CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
-
-        entity.attributes.forEach((attribute, index) => {
-
-            const comma =
-                index === entity.attributes.length - 1
-                    ? ""
-                    : ",";
-
-            let sqlType = attribute.type;
-
-            if (sqlType === "VARCHAR") {
-                sqlType = "VARCHAR(100)";
-            }
-
-            let line =
-                `    ${sanitizeSQLName(attribute.name)} ${sqlType}`;
-
-            if (attribute.primaryKey) {
-                line += " PRIMARY KEY";
-            }
-
-            sql += line + comma + "\n";
-        });
-
-        sql += `);\n\n`;
-    });
-
-    sqlOutput.textContent = sql.trim();
-
-    showValidation(
-        "success",
-        "SQL generated successfully from the ER model."
-    );
-});
+);
 
 
 /* =========================
    COPY SQL
 ========================= */
 
-copyBtn.addEventListener("click", async function () {
+copyBtn.addEventListener(
+    "click",
+    async function () {
 
-    const sql = sqlOutput.textContent;
+        const sql =
+            sqlOutput.textContent;
 
-    if (
-        !sql ||
-        sql === "-- Generated SQL will appear here."
-    ) {
 
-        showValidation(
-            "error",
-            "Generate SQL before copying it."
-        );
+        if (
+            !sql ||
+            sql ===
+            "-- Generated SQL will appear here."
+        ) {
 
-        return;
+            showValidation(
+                "error",
+                "Generate SQL before copying it."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            await navigator.clipboard.writeText(sql);
+
+
+            copyBtn.textContent =
+                "Copied!";
+
+
+            setTimeout(
+                () => {
+
+                    copyBtn.textContent =
+                        "Copy SQL";
+
+                },
+                1500
+            );
+
+
+        } catch (error) {
+
+            showValidation(
+                "error",
+                "Unable to copy SQL automatically."
+            );
+
+        }
+
     }
-
-    try {
-
-        await navigator.clipboard.writeText(sql);
-
-        copyBtn.textContent = "Copied!";
-
-        setTimeout(() => {
-            copyBtn.textContent = "Copy SQL";
-        }, 1500);
-
-    } catch (error) {
-
-        showValidation(
-            "error",
-            "Unable to copy SQL automatically."
-        );
-    }
-});
+);
 
 
 /* =========================
    VALIDATION
 ========================= */
 
-function showValidation(type, message) {
+function showValidation(
+    type,
+    message
+) {
 
     if (type === "error") {
 
@@ -403,12 +716,17 @@ function showValidation(type, message) {
         validationBox.style.borderColor =
             "rgba(255, 107, 122, 0.25)";
 
+
         validationBox.innerHTML = `
+
             <strong style="color: var(--danger)">
                 Validation Error
             </strong>
 
-            <p>${escapeHTML(message)}</p>
+            <p>
+                ${escapeHTML(message)}
+            </p>
+
         `;
 
     } else {
@@ -419,14 +737,21 @@ function showValidation(type, message) {
         validationBox.style.borderColor =
             "rgba(56, 211, 159, 0.25)";
 
+
         validationBox.innerHTML = `
+
             <strong>
                 Validation
             </strong>
 
-            <p>${escapeHTML(message)}</p>
+            <p>
+                ${escapeHTML(message)}
+            </p>
+
         `;
+
     }
+
 }
 
 
@@ -434,16 +759,33 @@ function showValidation(type, message) {
    THEME
 ========================= */
 
-themeBtn.addEventListener("click", function () {
+themeBtn.addEventListener(
+    "click",
+    function () {
 
-    document.body.classList.toggle("light");
+        document.body.classList.toggle(
+            "light"
+        );
 
-    if (document.body.classList.contains("light")) {
-        themeBtn.textContent = "☀";
-    } else {
-        themeBtn.textContent = "☾";
+
+        if (
+            document.body.classList.contains(
+                "light"
+            )
+        ) {
+
+            themeBtn.textContent =
+                "☀";
+
+        } else {
+
+            themeBtn.textContent =
+                "☾";
+
+        }
+
     }
-});
+);
 
 
 /* =========================
@@ -452,18 +794,45 @@ themeBtn.addEventListener("click", function () {
 
 function escapeHTML(value) {
 
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return String(value)
+
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 }
 
+
+/* =========================
+   SQL NAME CLEANING
+========================= */
 
 function sanitizeSQLName(value) {
 
     return value
         .trim()
-        .replace(/[^a-zA-Z0-9_]/g, "_");
+        .replace(
+            /[^a-zA-Z0-9_]/g,
+            "_"
+        );
 }
