@@ -71,6 +71,8 @@ function sanitizeSQLName(value){
 }
 
 function showValidation(type,message){
+    if(!validationBox)return;
+
     validationBox.style.background=type==="error"
         ?"rgba(255,107,122,.08)"
         :"rgba(56,211,159,.08)";
@@ -86,11 +88,6 @@ function showValidation(type,message){
         <p>${escapeHTML(message)}</p>
     `;
 }
-
-
-/* =========================
-   ADD ENTITY
-========================= */
 
 addEntityBtn.addEventListener("click",()=>{
     const name=entityNameInput.value.trim();
@@ -129,7 +126,9 @@ addEntityBtn.addEventListener("click",()=>{
 
     entities.push({
         name,
-        attributes
+        attributes,
+        x:undefined,
+        y:undefined
     });
 
     entityNameInput.value="";
@@ -145,15 +144,9 @@ addEntityBtn.addEventListener("click",()=>{
     showValidation("success",`${name} added successfully.`);
 });
 
-
-/* =========================
-   ENTITY LIST
-========================= */
-
 function renderEntities(){
     if(!entities.length){
-        entityList.innerHTML=
-            `<div class="empty-state">No entities added yet.</div>`;
+        entityList.innerHTML=`<div class="empty-state">No entities added yet.</div>`;
         return;
     }
 
@@ -168,8 +161,7 @@ function renderEntities(){
         ).join(", ");
 
         item.innerHTML=`
-            <button class="delete-btn"
-                onclick="deleteEntity(${index})">×</button>
+            <button class="delete-btn" onclick="deleteEntity(${index})">×</button>
             <strong>${escapeHTML(entity.name)}</strong>
             <span>${escapeHTML(attrs)}</span>
         `;
@@ -177,11 +169,6 @@ function renderEntities(){
         entityList.appendChild(item);
     });
 }
-
-
-/* =========================
-   DELETE ENTITY
-========================= */
 
 function deleteEntity(index){
     const removed=entities[index];
@@ -202,11 +189,6 @@ function deleteEntity(index){
 
     showValidation("success",`${removed.name} removed.`);
 }
-
-
-/* =========================
-   RELATIONSHIP SELECTORS
-========================= */
 
 function updateRelationshipSelectors(){
     if(!relFrom||!relTo)return;
@@ -234,11 +216,6 @@ function updateRelationshipSelectors(){
     if(entities.some(e=>e.name===oldTo))relTo.value=oldTo;
 }
 
-
-/* =========================
-   ADD RELATIONSHIP
-========================= */
-
 if(addRelBtn){
     addRelBtn.addEventListener("click",()=>{
         const from=relFrom.value;
@@ -260,27 +237,11 @@ if(addRelBtn){
             return;
         }
 
-        /*
-           Relationship name:
-           If your HTML has a relationship-name input,
-           use it. Otherwise use the cardinality as a
-           temporary fallback.
-        */
-
-        const relNameInput=document.getElementById("relationshipName");
-
-        const relationName=relNameInput&&relNameInput.value.trim()
-            ?relNameInput.value.trim()
-            :"Relationship";
-
         relationships.push({
             from,
             to,
-            type,
-            name:relationName
+            type
         });
-
-        if(relNameInput)relNameInput.value="";
 
         renderRelationshipList();
         renderDiagram();
@@ -290,15 +251,10 @@ if(addRelBtn){
 
         showValidation(
             "success",
-            `${relationName} relationship added.`
+            `${from} ${type} ${to} relationship added.`
         );
     });
 }
-
-
-/* =========================
-   RELATIONSHIP LIST
-========================= */
 
 function renderRelationshipList(){
     if(!relationshipList)return;
@@ -317,9 +273,8 @@ function renderRelationshipList(){
 
         item.innerHTML=`
             <span>
-                ${escapeHTML(r.name||"Relationship")} :
                 ${escapeHTML(r.from)}
-                → 
+                →
                 ${escapeHTML(r.to)}
                 (${escapeHTML(r.type)})
             </span>
@@ -340,10 +295,9 @@ function deleteRelationship(index){
     updateProgress();
 }
 
-
-/* =====================================================
+/* ================================
    ER DIAGRAM
-===================================================== */
+================================ */
 
 function renderDiagram(){
     if(!entities.length){
@@ -371,25 +325,20 @@ function renderDiagram(){
 
     canvas.appendChild(svg);
 
-    const positions={};
-
-    /*
-       Give every entity a starting position.
-       These positions can then be dragged.
-    */
+    const entityElements={};
 
     entities.forEach((entity,index)=>{
         const wrapper=document.createElement("div");
 
         wrapper.className="er-entity-wrapper";
 
-        const col=index%2;
-        const row=Math.floor(index/2);
+        if(entity.x===undefined){
+            entity.x=80+(index%2)*430;
+            entity.y=100+Math.floor(index/2)*300;
+        }
 
-        wrapper.style.left=`${80+col*390}px`;
-        wrapper.style.top=`${80+row*300}px`;
-
-        wrapper.dataset.entity=entity.name;
+        wrapper.style.left=entity.x+"px";
+        wrapper.style.top=entity.y+"px";
 
         const entityBox=document.createElement("div");
 
@@ -398,11 +347,7 @@ function renderDiagram(){
 
         wrapper.appendChild(entityBox);
 
-        /*
-           Attributes
-        */
-
-        entity.attributes.forEach((attribute,index)=>{
+        entity.attributes.forEach((attribute,attrIndex)=>{
             const attributeWrapper=document.createElement("div");
 
             attributeWrapper.className="er-attribute-wrapper";
@@ -419,18 +364,16 @@ function renderDiagram(){
                 <span class="attribute-name">
                     ${
                         attribute.primaryKey
-                        ?`<u>${escapeHTML(attribute.name)}</u>`
-                        :escapeHTML(attribute.name)
+                        ? `<u>${escapeHTML(attribute.name)}</u>`
+                        : escapeHTML(attribute.name)
                     }
                 </span>
-
                 <span class="attribute-type">
                     ${escapeHTML(attribute.type)}
                 </span>
             `;
 
             const line=document.createElement("div");
-
             line.className="er-line";
 
             attributeWrapper.appendChild(attributeOval);
@@ -444,355 +387,360 @@ function renderDiagram(){
             ];
 
             attributeWrapper.classList.add(
-                positions[index%positions.length]
+                positions[attrIndex%positions.length]
             );
 
             wrapper.appendChild(attributeWrapper);
         });
 
+        makeEntityDraggable(wrapper,entity);
+
         canvas.appendChild(wrapper);
 
-        positions[entity.name]=wrapper;
+        entityElements[entity.name]=wrapper;
     });
 
-    /*
-       Draw relationships after all entities exist.
-    */
-
-    relationships.forEach((relationship,index)=>{
-        drawRelationship(
-            svg,
-            relationship,
-            positions,
-            index
-        );
+    requestAnimationFrame(()=>{
+        renderRelationshipLines(svg,entityElements,canvas);
     });
 
     diagramArea.appendChild(canvas);
-
-    /*
-       Make entities draggable.
-       The relationship SVG is redrawn while dragging.
-    */
-
-    entities.forEach(entity=>{
-        const wrapper=positions[entity.name];
-
-        makeDraggable(
-            wrapper,
-            canvas,
-            svg,
-            positions
-        );
-    });
 }
 
-
-/* =====================================================
-   DRAW RELATIONSHIP
-===================================================== */
-
-function drawRelationship(svg,relationship,positions,index){
-
-    const fromEl=positions[relationship.from];
-    const toEl=positions[relationship.to];
-
-    if(!fromEl||!toEl)return;
-
-    const fromX=fromEl.offsetLeft+fromEl.offsetWidth/2;
-    const fromY=fromEl.offsetTop+fromEl.offsetHeight/2;
-
-    const toX=toEl.offsetLeft+toEl.offsetWidth/2;
-    const toY=toEl.offsetTop+toEl.offsetHeight/2;
-
-    const dx=toX-fromX;
-    const dy=toY-fromY;
-
-    const distance=Math.sqrt(dx*dx+dy*dy)||1;
-
-    const unitX=dx/distance;
-    const unitY=dy/distance;
-
-    const diamondDistance=75;
-
-    const diamondX=
-        (fromX+toX)/2;
-
-    const diamondY=
-        (fromY+toY)/2;
-
-    const lineGap=45;
-
-    const firstEndX=
-        diamondX-unitX*lineGap;
-
-    const firstEndY=
-        diamondY-unitY*lineGap;
-
-    const secondStartX=
-        diamondX+unitX*lineGap;
-
-    const secondStartY=
-        diamondY+unitY*lineGap;
-
-    /*
-       LINE FROM ENTITY TO DIAMOND
-    */
-
-    const line1=document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "line"
-    );
-
-    line1.setAttribute("x1",fromX);
-    line1.setAttribute("y1",fromY);
-    line1.setAttribute("x2",firstEndX);
-    line1.setAttribute("y2",firstEndY);
-
-    line1.classList.add("relationship-line");
-
-    svg.appendChild(line1);
-
-
-    /*
-       LINE FROM DIAMOND TO ENTITY
-    */
-
-    const line2=document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "line"
-    );
-
-    line2.setAttribute("x1",secondStartX);
-    line2.setAttribute("y1",secondStartY);
-    line2.setAttribute("x2",toX);
-    line2.setAttribute("y2",toY);
-
-    line2.classList.add("relationship-line");
-
-    svg.appendChild(line2);
-
-
-    /*
-       DIAMOND
-    */
-
-    const diamond=document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polygon"
-    );
-
-    const size=42;
-
-    diamond.setAttribute(
-        "points",
-        `
-        ${diamondX},${diamondY-size}
-        ${diamondX+size},${diamondY}
-        ${diamondX},${diamondY+size}
-        ${diamondX-size},${diamondY}
-        `
-    );
-
-    diamond.classList.add("relationship-diamond");
-
-    svg.appendChild(diamond);
-
-
-    /*
-       RELATIONSHIP NAME
-    */
-
-    const relationText=document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "text"
-    );
-
-    relationText.setAttribute("x",diamondX);
-    relationText.setAttribute("y",diamondY+5);
-    relationText.setAttribute("text-anchor","middle");
-
-    relationText.classList.add("relationship-name");
-
-    relationText.textContent=
-        relationship.name||"Relationship";
-
-    svg.appendChild(relationText);
-
-
-    /*
-       CARDINALITY
-    */
-
-    let leftCardinality="1";
-    let rightCardinality="1";
-
-    if(relationship.type==="1:N"){
-        leftCardinality="1";
-        rightCardinality="N";
-    }
-
-    else if(relationship.type==="N:1"){
-        leftCardinality="N";
-        rightCardinality="1";
-    }
-
-    else if(relationship.type==="M:N"){
-        leftCardinality="M";
-        rightCardinality="N";
-    }
-
-    else if(relationship.type==="1:1"){
-        leftCardinality="1";
-        rightCardinality="1";
-    }
-
-
-    /*
-       Put cardinalities above their
-       respective relationship lines.
-    */
-
-    const leftText=document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "text"
-    );
-
-    leftText.setAttribute(
-        "x",
-        fromX+(firstEndX-fromX)*0.55
-    );
-
-    leftText.setAttribute(
-        "y",
-        fromY+(firstEndY-fromY)*0.55-10
-    );
-
-    leftText.setAttribute(
-        "text-anchor",
-        "middle"
-    );
-
-    leftText.classList.add("cardinality-text");
-
-    leftText.textContent=leftCardinality;
-
-    svg.appendChild(leftText);
-
-
-    const rightText=document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "text"
-    );
-
-    rightText.setAttribute(
-        "x",
-        secondStartX+(toX-secondStartX)*0.55
-    );
-
-    rightText.setAttribute(
-        "y",
-        secondStartY+(toY-secondStartY)*0.55-10
-    );
-
-    rightText.setAttribute(
-        "text-anchor",
-        "middle"
-    );
-
-    rightText.classList.add("cardinality-text");
-
-    rightText.textContent=rightCardinality;
-
-    svg.appendChild(rightText);
-}
-
-
-/* =====================================================
-   DRAGGING
-===================================================== */
-
-function makeDraggable(wrapper,canvas,svg,positions){
-
+function makeEntityDraggable(wrapper,entity){
     let dragging=false;
-    let offsetX=0;
-    let offsetY=0;
+    let startX=0;
+    let startY=0;
+    let originalX=0;
+    let originalY=0;
 
-    wrapper.addEventListener("mousedown",e=>{
-        if(e.target.closest(".er-attribute"))return;
+    wrapper.addEventListener("pointerdown",e=>{
+        if(
+            e.target.classList.contains("er-attribute")||
+            e.target.classList.contains("er-line")
+        )return;
 
         dragging=true;
 
-        const rect=canvas.getBoundingClientRect();
+        wrapper.setPointerCapture(e.pointerId);
 
-        offsetX=
-            e.clientX-
-            rect.left-
-            wrapper.offsetLeft;
+        startX=e.clientX;
+        startY=e.clientY;
 
-        offsetY=
-            e.clientY-
-            rect.top-
-            wrapper.offsetTop;
+        originalX=entity.x;
+        originalY=entity.y;
 
         wrapper.classList.add("dragging");
 
         e.preventDefault();
     });
 
-    document.addEventListener("mousemove",e=>{
+    wrapper.addEventListener("pointermove",e=>{
         if(!dragging)return;
 
-        const rect=canvas.getBoundingClientRect();
+        const dx=e.clientX-startX;
+        const dy=e.clientY-startY;
 
-        let x=
-            e.clientX-
-            rect.left-
-            offsetX;
+        entity.x=originalX+dx;
+        entity.y=originalY+dy;
 
-        let y=
-            e.clientY-
-            rect.top-
-            offsetY;
+        wrapper.style.left=entity.x+"px";
+        wrapper.style.top=entity.y+"px";
 
-        x=Math.max(20,x);
-        y=Math.max(20,y);
-
-        wrapper.style.left=`${x}px`;
-        wrapper.style.top=`${y}px`;
-
-        /*
-           Remove old relationship SVG
-           and redraw everything.
-        */
-
-        svg.innerHTML="";
-
-        relationships.forEach((relationship,index)=>{
-            drawRelationship(
-                svg,
-                relationship,
-                positions,
-                index
-            );
-        });
+        updateAllRelationshipLines();
     });
 
-    document.addEventListener("mouseup",()=>{
-        if(!dragging)return;
+    wrapper.addEventListener("pointerup",e=>{
+        dragging=false;
+        wrapper.classList.remove("dragging");
+    });
 
+    wrapper.addEventListener("pointercancel",()=>{
         dragging=false;
         wrapper.classList.remove("dragging");
     });
 }
 
+/* ================================
+   RELATIONSHIP LINES
+================================ */
 
-/* =====================================================
-   GENERATE SQL
-===================================================== */
+function renderRelationshipLines(svg,entityElements,canvas){
+    svg.innerHTML="";
+
+    relationships.forEach((relationship,index)=>{
+        const fromEl=entityElements[relationship.from];
+        const toEl=entityElements[relationship.to];
+
+        if(!fromEl||!toEl)return;
+
+        const lineGroup=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "g"
+        );
+
+        lineGroup.classList.add("relationship-group");
+
+        lineGroup.dataset.relationship=index;
+
+        const line=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "line"
+        );
+
+        line.classList.add("relationship-line");
+
+        const cardinalityFrom=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+        );
+
+        cardinalityFrom.classList.add("cardinality-label");
+
+        const cardinalityTo=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+        );
+
+        cardinalityTo.classList.add("cardinality-label");
+
+        const diamond=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "polygon"
+        );
+
+        diamond.classList.add("relationship-diamond");
+
+        const relationshipText=document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+        );
+
+        relationshipText.classList.add("relationship-name");
+
+        relationshipText.textContent=relationship.type;
+
+        lineGroup.appendChild(line);
+        lineGroup.appendChild(diamond);
+        lineGroup.appendChild(cardinalityFrom);
+        lineGroup.appendChild(cardinalityTo);
+        lineGroup.appendChild(relationshipText);
+
+        svg.appendChild(lineGroup);
+
+        makeRelationshipDraggable(
+            lineGroup,
+            relationship
+        );
+    });
+
+    updateRelationshipLines(svg,entityElements);
+}
+
+function updateRelationshipLines(svg,entityElements){
+    relationships.forEach((relationship,index)=>{
+        const group=svg.querySelector(
+            `[data-relationship="${index}"]`
+        );
+
+        const fromEl=entityElements[relationship.from];
+        const toEl=entityElements[relationship.to];
+
+        if(!group||!fromEl||!toEl)return;
+
+        const line=group.querySelector(".relationship-line");
+        const diamond=group.querySelector(".relationship-diamond");
+        const labels=group.querySelectorAll(".cardinality-label");
+        const name=group.querySelector(".relationship-name");
+
+        const fromX=fromEl.offsetLeft+fromEl.offsetWidth/2;
+        const fromY=fromEl.offsetTop+fromEl.offsetHeight/2;
+
+        const toX=toEl.offsetLeft+toEl.offsetWidth/2;
+        const toY=toEl.offsetTop+toEl.offsetHeight/2;
+
+        const dx=toX-fromX;
+        const dy=toY-fromY;
+
+        const distance=Math.sqrt(dx*dx+dy*dy);
+
+        if(distance===0)return;
+
+        const unitX=dx/distance;
+        const unitY=dy/distance;
+
+        const startX=fromX+unitX*90;
+        const startY=fromY+unitY*45;
+
+        const endX=toX-unitX*90;
+        const endY=toY-unitY*45;
+
+        const middleX=(startX+endX)/2;
+        const middleY=(startY+endY)/2;
+
+        line.setAttribute("x1",startX);
+        line.setAttribute("y1",startY);
+        line.setAttribute("x2",endX);
+        line.setAttribute("y2",endY);
+
+        const diamondSize=22;
+
+        const px=-unitY;
+        const py=unitX;
+
+        const points=[
+            `${middleX+unitX*diamondSize},${middleY+unitY*diamondSize}`,
+            `${middleX+px*diamondSize},${middleY+py*diamondSize}`,
+            `${middleX-unitX*diamondSize},${middleY-unitY*diamondSize}`,
+            `${middleX-px*diamondSize},${middleY-py*diamondSize}`
+        ].join(" ");
+
+        diamond.setAttribute("points",points);
+
+        const card=getCardinalities(relationship.type);
+
+        labels[0].textContent=card.from;
+        labels[1].textContent=card.to;
+
+        const labelOffset=25;
+
+        labels[0].setAttribute(
+            "x",
+            startX+unitX*labelOffset
+        );
+
+        labels[0].setAttribute(
+            "y",
+            startY+unitY*labelOffset-8
+        );
+
+        labels[1].setAttribute(
+            "x",
+            endX-unitX*labelOffset
+        );
+
+        labels[1].setAttribute(
+            "y",
+            endY-unitY*labelOffset-8
+        );
+
+        name.setAttribute("x",middleX);
+        name.setAttribute("y",middleY+4);
+        name.setAttribute("text-anchor","middle");
+    });
+}
+
+function getCardinalities(type){
+    if(type==="1 : 1"){
+        return{
+            from:"1",
+            to:"1"
+        };
+    }
+
+    if(type==="1 : N"){
+        return{
+            from:"1",
+            to:"N"
+        };
+    }
+
+    if(type==="N : 1"){
+        return{
+            from:"N",
+            to:"1"
+        };
+    }
+
+    if(type==="M : N"){
+        return{
+            from:"M",
+            to:"N"
+        };
+    }
+
+    return{
+        from:"1",
+        to:"N"
+    };
+}
+
+function updateAllRelationshipLines(){
+    const svg=diagramArea.querySelector(".relationship-svg");
+
+    if(!svg)return;
+
+    const entityElements={};
+
+    entities.forEach(entity=>{
+        const wrappers=[
+            ...diagramArea.querySelectorAll(".er-entity-wrapper")
+        ];
+
+        wrappers.forEach(wrapper=>{
+            const box=wrapper.querySelector(".er-entity");
+
+            if(
+                box&&
+                box.textContent===entity.name
+            ){
+                entityElements[entity.name]=wrapper;
+            }
+        });
+    });
+
+    updateRelationshipLines(svg,entityElements);
+}
+
+function makeRelationshipDraggable(group,relationship){
+    let dragging=false;
+    let startX=0;
+    let startY=0;
+
+    group.addEventListener("pointerdown",e=>{
+        if(
+            e.target.classList.contains("relationship-diamond")||
+            e.target.classList.contains("relationship-name")
+        ){
+            dragging=true;
+            startX=e.clientX;
+            startY=e.clientY;
+
+            group.setPointerCapture(e.pointerId);
+
+            e.preventDefault();
+        }
+    });
+
+    group.addEventListener("pointermove",e=>{
+        if(!dragging)return;
+
+        const dx=e.clientX-startX;
+        const dy=e.clientY-startY;
+
+        relationship.offsetX=(relationship.offsetX||0)+dx;
+        relationship.offsetY=(relationship.offsetY||0)+dy;
+
+        startX=e.clientX;
+        startY=e.clientY;
+
+        updateAllRelationshipLines();
+    });
+
+    group.addEventListener("pointerup",()=>{
+        dragging=false;
+    });
+
+    group.addEventListener("pointercancel",()=>{
+        dragging=false;
+    });
+}
+
+/* ================================
+   SQL GENERATION
+================================ */
 
 generateBtn.addEventListener("click",()=>{
-
     if(!entities.length){
         showValidation(
             "error",
@@ -803,17 +751,10 @@ generateBtn.addEventListener("click",()=>{
 
     let sql="";
 
-    /*
-       ENTITY TABLES
-    */
-
     entities.forEach(entity=>{
-
-        sql+=
-            `CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
+        sql+=`CREATE TABLE ${sanitizeSQLName(entity.name)} (\n`;
 
         entity.attributes.forEach((attribute,index)=>{
-
             let type=attribute.type;
 
             if(type==="VARCHAR"){
@@ -837,13 +778,9 @@ generateBtn.addEventListener("click",()=>{
         sql+=");\n\n";
     });
 
+    /* RELATIONSHIP SQL */
 
-    /*
-       RELATIONSHIP SQL
-    */
-
-    relationships.forEach(relationship=>{
-
+    relationships.forEach((relationship,index)=>{
         const fromEntity=entities.find(
             e=>e.name===relationship.from
         );
@@ -854,106 +791,73 @@ generateBtn.addEventListener("click",()=>{
 
         if(!fromEntity||!toEntity)return;
 
+        const fromPK=fromEntity.attributes.find(
+            a=>a.primaryKey
+        );
+
+        const toPK=toEntity.attributes.find(
+            a=>a.primaryKey
+        );
+
+        if(!fromPK||!toPK)return;
+
+        const relationName=sanitizeSQLName(
+            relationship.type
+                .toLowerCase()
+                .replace(/\s+/g,"_")
+        );
+
+        const fromTable=sanitizeSQLName(
+            relationship.from
+        );
+
+        const toTable=sanitizeSQLName(
+            relationship.to
+        );
+
         /*
-           M:N requires a junction table.
+           M:N needs a separate relationship table.
         */
 
-        if(relationship.type==="M:N"){
+        if(relationship.type==="M : N"){
 
-            const tableName=
-                sanitizeSQLName(
-                    relationship.name||`${relationship.from}_${relationship.to}`
-                );
-
-            const fromPK=
-                fromEntity.attributes.find(
-                    a=>a.primaryKey
-                );
-
-            const toPK=
-                toEntity.attributes.find(
-                    a=>a.primaryKey
-                );
-
-            if(!fromPK||!toPK)return;
-
-            sql+=
-`CREATE TABLE ${tableName} (
-    ${sanitizeSQLName(relationship.from)}_${sanitizeSQLName(fromPK.name)} INTEGER,
-    ${sanitizeSQLName(relationship.to)}_${sanitizeSQLName(toPK.name)} INTEGER,
-    PRIMARY KEY (${sanitizeSQLName(relationship.from)}_${sanitizeSQLName(fromPK.name)}, ${sanitizeSQLName(relationship.to)}_${sanitizeSQLName(toPK.name)}),
-    FOREIGN KEY (${sanitizeSQLName(relationship.from)}_${sanitizeSQLName(fromPK.name)}) REFERENCES ${sanitizeSQLName(relationship.from)}(${sanitizeSQLName(fromPK.name)}),
-    FOREIGN KEY (${sanitizeSQLName(relationship.to)}_${sanitizeSQLName(toPK.name)}) REFERENCES ${sanitizeSQLName(relationship.to)}(${sanitizeSQLName(toPK.name)})
-);
-
-`;
-
+            sql+=`CREATE TABLE ${relationName}_relation (\n`;
+            sql+=`    ${fromTable}_${sanitizeSQLName(fromPK.name)} INTEGER,\n`;
+            sql+=`    ${toTable}_${sanitizeSQLName(toPK.name)} INTEGER,\n`;
+            sql+=`    PRIMARY KEY (${fromTable}_${sanitizeSQLName(fromPK.name)}, ${toTable}_${sanitizeSQLName(toPK.name)}),\n`;
+            sql+=`    FOREIGN KEY (${fromTable}_${sanitizeSQLName(fromPK.name)}) REFERENCES ${fromTable}(${sanitizeSQLName(fromPK.name)}),\n`;
+            sql+=`    FOREIGN KEY (${toTable}_${sanitizeSQLName(toPK.name)}) REFERENCES ${toTable}(${sanitizeSQLName(toPK.name)})\n`;
+            sql+=`);\n\n`;
         }
 
         /*
-           1:N
-           Foreign key goes on the N-side.
+           1:N means the N-side gets the foreign key.
         */
 
-        else if(relationship.type==="1:N"){
+        else if(relationship.type==="1 : N"){
 
-            const pk=fromEntity.attributes.find(
-                a=>a.primaryKey
-            );
-
-            if(!pk)return;
-
-            sql+=
-`ALTER TABLE ${sanitizeSQLName(toEntity.name)}
-ADD ${sanitizeSQLName(fromEntity.name)}_${sanitizeSQLName(pk.name)} INTEGER,
-ADD FOREIGN KEY (${sanitizeSQLName(fromEntity.name)}_${sanitizeSQLName(pk.name)})
-REFERENCES ${sanitizeSQLName(fromEntity.name)}(${sanitizeSQLName(pk.name)});
-
-`;
+            sql+=`ALTER TABLE ${toTable}\n`;
+            sql+=`ADD FOREIGN KEY (${sanitizeSQLName(fromPK.name)}) REFERENCES ${fromTable}(${sanitizeSQLName(fromPK.name)});\n\n`;
         }
 
         /*
-           N:1
-           Foreign key goes on the N-side,
-           which is the FROM entity.
+           N:1 means the N-side is the FROM entity.
         */
 
-        else if(relationship.type==="N:1"){
+        else if(relationship.type==="N : 1"){
 
-            const pk=toEntity.attributes.find(
-                a=>a.primaryKey
-            );
-
-            if(!pk)return;
-
-            sql+=
-`ALTER TABLE ${sanitizeSQLName(fromEntity.name)}
-ADD ${sanitizeSQLName(toEntity.name)}_${sanitizeSQLName(pk.name)} INTEGER,
-ADD FOREIGN KEY (${sanitizeSQLName(toEntity.name)}_${sanitizeSQLName(pk.name)})
-REFERENCES ${sanitizeSQLName(toEntity.name)}(${sanitizeSQLName(pk.name)});
-
-`;
+            sql+=`ALTER TABLE ${fromTable}\n`;
+            sql+=`ADD FOREIGN KEY (${sanitizeSQLName(toPK.name)}) REFERENCES ${toTable}(${sanitizeSQLName(toPK.name)});\n\n`;
         }
 
         /*
-           1:1
+           1:1 uses a foreign key from the second entity.
         */
 
-        else if(relationship.type==="1:1"){
+        else if(relationship.type==="1 : 1"){
 
-            const pk=toEntity.attributes.find(
-                a=>a.primaryKey
-            );
-
-            if(!pk)return;
-
-            sql+=
-`ALTER TABLE ${sanitizeSQLName(fromEntity.name)}
-ADD ${sanitizeSQLName(toEntity.name)}_${sanitizeSQLName(pk.name)} INTEGER UNIQUE,
-ADD FOREIGN KEY (${sanitizeSQLName(toEntity.name)}_${sanitizeSQLName(pk.name)})
-REFERENCES ${sanitizeSQLName(toEntity.name)}(${sanitizeSQLName(pk.name)});
-
-`;
+            sql+=`ALTER TABLE ${toTable}\n`;
+            sql+=`ADD FOREIGN KEY (${sanitizeSQLName(fromPK.name)}) REFERENCES ${fromTable}(${sanitizeSQLName(fromPK.name)});\n\n`;
         }
     });
 
@@ -968,13 +872,11 @@ REFERENCES ${sanitizeSQLName(toEntity.name)}(${sanitizeSQLName(pk.name)});
     );
 });
 
-
-/* =====================================================
-   COPY SQL
-===================================================== */
+/* ================================
+   COPY
+================================ */
 
 copyBtn.addEventListener("click",async()=>{
-
     const sql=sqlOutput.textContent;
 
     if(
@@ -989,7 +891,6 @@ copyBtn.addEventListener("click",async()=>{
     }
 
     try{
-
         await navigator.clipboard.writeText(sql);
 
         copyBtn.textContent="Copied!";
@@ -999,7 +900,6 @@ copyBtn.addEventListener("click",async()=>{
         },1500);
 
     }catch{
-
         showValidation(
             "error",
             "Unable to copy SQL."
@@ -1007,15 +907,12 @@ copyBtn.addEventListener("click",async()=>{
     }
 });
 
-
-/* =====================================================
+/* ================================
    THEME
-===================================================== */
+================================ */
 
 if(themeBtn){
-
     themeBtn.addEventListener("click",()=>{
-
         document.body.classList.toggle("light");
 
         themeBtn.textContent=
@@ -1025,12 +922,12 @@ if(themeBtn){
     });
 }
 
-
-/* =====================================================
-   INITIALIZE
-===================================================== */
+/* ================================
+   INITIAL STATE
+================================ */
 
 updateRelationshipSelectors();
 renderEntities();
 renderRelationshipList();
+renderDiagram();
 updateProgress();
