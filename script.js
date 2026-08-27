@@ -1,9 +1,9 @@
 let entities = [];
 
 
-/* =========================
+/* =========================================
    ELEMENTS
-========================= */
+========================================= */
 
 const entityNameInput =
     document.getElementById("entityName");
@@ -36,143 +36,173 @@ const themeBtn =
     document.getElementById("themeBtn");
 
 
-/* =========================
+/* =========================================
    ADD ENTITY
-========================= */
+========================================= */
 
-addEntityBtn.addEventListener("click", function () {
+addEntityBtn.addEventListener(
+    "click",
+    function () {
 
-    const entityName =
-        entityNameInput.value.trim();
+        const entityName =
+            entityNameInput.value.trim();
 
-    const attributeText =
-        attributesInput.value.trim();
+        const attributeText =
+            attributesInput.value.trim();
 
 
-    if (entityName === "") {
+        if (entityName === "") {
+
+            showValidation(
+                "error",
+                "Please enter an entity name."
+            );
+
+            return;
+        }
+
+
+        if (attributeText === "") {
+
+            showValidation(
+                "error",
+                "Please enter at least one attribute."
+            );
+
+            return;
+        }
+
+
+        /* Duplicate check */
+
+        const duplicate =
+            entities.some(
+                entity =>
+                    entity.name.toLowerCase() ===
+                    entityName.toLowerCase()
+            );
+
+
+        if (duplicate) {
+
+            showValidation(
+                "error",
+                "This entity already exists."
+            );
+
+            return;
+        }
+
+
+        /* Read attributes */
+
+        const attributeNames =
+            attributeText
+                .split(",")
+                .map(
+                    attribute =>
+                        attribute.trim()
+                )
+                .filter(
+                    attribute =>
+                        attribute !== ""
+                );
+
+
+        if (attributeNames.length === 0) {
+
+            showValidation(
+                "error",
+                "Please enter valid attributes."
+            );
+
+            return;
+        }
+
+
+        /* Create attributes */
+
+        const attributes =
+            attributeNames.map(
+                attributeName => {
+
+                    return {
+
+                        name: attributeName,
+
+                        type:
+                            inferDataType(
+                                attributeName
+                            ),
+
+                        primaryKey:
+                            detectPrimaryKey(
+                                attributeName
+                            )
+
+                    };
+
+                }
+            );
+
+
+        /* Ensure a primary key */
+
+        const hasPrimaryKey =
+            attributes.some(
+                attribute =>
+                    attribute.primaryKey
+            );
+
+
+        if (!hasPrimaryKey) {
+
+            showValidation(
+                "error",
+                "No primary key was detected. Add an attribute such as student_id or id."
+            );
+
+            return;
+        }
+
+
+        /* Save */
+
+        entities.push({
+
+            name: entityName,
+
+            attributes: attributes
+
+        });
+
+
+        /* Clear fields */
+
+        entityNameInput.value = "";
+
+        attributesInput.value = "";
+
+
+        /* Update UI */
+
+        renderEntities();
+
+        renderDiagram();
+
 
         showValidation(
-            "error",
-            "Please enter an entity name."
+            "success",
+            `${entityName} added successfully.`
         );
 
-        return;
     }
+);
 
 
-    if (attributeText === "") {
-
-        showValidation(
-            "error",
-            "Please enter at least one attribute."
-        );
-
-        return;
-    }
-
-
-    /* Duplicate entity validation */
-
-    const duplicate =
-        entities.some(
-            entity =>
-                entity.name.toLowerCase() ===
-                entityName.toLowerCase()
-        );
-
-
-    if (duplicate) {
-
-        showValidation(
-            "error",
-            "An entity with this name already exists."
-        );
-
-        return;
-    }
-
-
-    /* Convert text into attributes */
-
-    const attributeNames =
-        attributeText
-            .split(",")
-            .map(attribute => attribute.trim())
-            .filter(attribute => attribute !== "");
-
-
-    if (attributeNames.length === 0) {
-
-        showValidation(
-            "error",
-            "Please enter valid attributes."
-        );
-
-        return;
-    }
-
-
-    /* Create attribute objects */
-
-    const attributes =
-        attributeNames.map(
-            attributeName => {
-
-                return {
-
-                    name: attributeName,
-
-                    type:
-                        inferDataType(
-                            attributeName
-                        ),
-
-                    primaryKey:
-                        detectPrimaryKey(
-                            attributeName
-                        )
-
-                };
-
-            }
-        );
-
-
-    /* Add entity */
-
-    entities.push({
-
-        name: entityName,
-
-        attributes: attributes
-
-    });
-
-
-    /* Clear input */
-
-    entityNameInput.value = "";
-    attributesInput.value = "";
-
-
-    /* Update interface */
-
-    renderEntities();
-
-    renderDiagram();
-
-
-    showValidation(
-        "success",
-        `${entityName} added successfully. Data types and primary key were inferred automatically.`
-    );
-
-});
-
-
-/* =========================
+/* =========================================
    PRIMARY KEY DETECTION
-========================= */
+========================================= */
 
 function detectPrimaryKey(attributeName) {
 
@@ -182,26 +212,16 @@ function detectPrimaryKey(attributeName) {
             .trim();
 
 
-    /*
-       Examples detected:
-
-       student_id
-       course_id
-       employee_id
-       id
-    */
-
     return (
         name === "id" ||
-        name.endsWith("_id") ||
-        name.endsWith("id")
+        name.endsWith("_id")
     );
 }
 
 
-/* =========================
-   DATA TYPE INFERENCE
-========================= */
+/* =========================================
+   DATA TYPE DETECTION
+========================================= */
 
 function inferDataType(attributeName) {
 
@@ -211,12 +231,11 @@ function inferDataType(attributeName) {
             .trim();
 
 
-    /* IDs */
+    /* ID */
 
     if (
         name === "id" ||
-        name.endsWith("_id") ||
-        name.endsWith("id")
+        name.endsWith("_id")
     ) {
 
         return "INTEGER";
@@ -224,7 +243,7 @@ function inferDataType(attributeName) {
     }
 
 
-    /* Integer-like attributes */
+    /* Integer */
 
     const integerWords = [
 
@@ -255,7 +274,7 @@ function inferDataType(attributeName) {
     }
 
 
-    /* Decimal-like attributes */
+    /* Decimal */
 
     const decimalWords = [
 
@@ -281,7 +300,7 @@ function inferDataType(attributeName) {
     }
 
 
-    /* Date-like attributes */
+    /* Date */
 
     const dateWords = [
 
@@ -306,7 +325,7 @@ function inferDataType(attributeName) {
     }
 
 
-    /* Boolean-like attributes */
+    /* Boolean */
 
     const booleanWords = [
 
@@ -336,18 +355,20 @@ function inferDataType(attributeName) {
 }
 
 
-/* =========================
-   DISPLAY ENTITIES
-========================= */
+/* =========================================
+   ENTITY LIST
+========================================= */
 
 function renderEntities() {
 
     if (entities.length === 0) {
 
         entityList.innerHTML = `
+
             <div class="empty-state">
                 No entities added yet.
             </div>
+
         `;
 
         return;
@@ -367,12 +388,16 @@ function renderEntities() {
                 "entity-item";
 
 
-            const attributeText =
+            const attributes =
                 entity.attributes
                     .map(
                         attribute => {
 
-                            return `${attribute.name} (${attribute.type})${
+                            return `${
+                                attribute.name
+                            } (${
+                                attribute.type
+                            })${
                                 attribute.primaryKey
                                     ? " 🔑"
                                     : ""
@@ -397,7 +422,7 @@ function renderEntities() {
                 </strong>
 
                 <span>
-                    ${escapeHTML(attributeText)}
+                    ${escapeHTML(attributes)}
                 </span>
 
             `;
@@ -410,13 +435,13 @@ function renderEntities() {
 }
 
 
-/* =========================
+/* =========================================
    DELETE ENTITY
-========================= */
+========================================= */
 
 function deleteEntity(index) {
 
-    const removedEntity =
+    const removed =
         entities[index];
 
 
@@ -430,14 +455,14 @@ function deleteEntity(index) {
 
     showValidation(
         "success",
-        `${removedEntity.name} was removed.`
+        `${removed.name} removed.`
     );
 }
 
 
-/* =========================
+/* =========================================
    ER DIAGRAM
-========================= */
+========================================= */
 
 function renderDiagram() {
 
@@ -456,8 +481,8 @@ function renderDiagram() {
                 </h3>
 
                 <p>
-                    Add entities from the input panel
-                    to begin building your database model.
+                    Add an entity to begin building
+                    your database model.
                 </p>
 
             </div>
@@ -468,83 +493,158 @@ function renderDiagram() {
     }
 
 
-    const container =
+    diagramArea.innerHTML = "";
+
+
+    const canvas =
         document.createElement("div");
 
-    container.className =
-        "diagram-container";
+    canvas.className =
+        "er-canvas";
 
 
     entities.forEach(
         entity => {
 
+            const wrapper =
+                document.createElement("div");
+
+            wrapper.className =
+                "er-entity-wrapper";
+
+
+            /* ENTITY RECTANGLE */
+
             const entityBox =
                 document.createElement("div");
 
             entityBox.className =
-                "diagram-entity";
+                "er-entity";
+
+            entityBox.textContent =
+                entity.name;
 
 
-            let attributesHTML = "";
+            wrapper.appendChild(
+                entityBox
+            );
 
+
+            /* ATTRIBUTES */
 
             entity.attributes.forEach(
-                attribute => {
+                (attribute, index) => {
 
-                    attributesHTML += `
+                    const attributeWrapper =
+                        document.createElement("div");
 
-                        <div class="diagram-attribute ${
-                            attribute.primaryKey
-                                ? "pk"
-                                : ""
-                        }">
+                    attributeWrapper.className =
+                        "er-attribute-wrapper";
+
+
+                    const attributeOval =
+                        document.createElement("div");
+
+                    attributeOval.className =
+                        "er-attribute";
+
+
+                    if (
+                        attribute.primaryKey
+                    ) {
+
+                        attributeOval.classList.add(
+                            "primary-key"
+                        );
+
+                    }
+
+
+                    attributeOval.innerHTML = `
+
+                        <span class="attribute-name">
 
                             ${
                                 attribute.primaryKey
-                                    ? "🔑 "
-                                    : ""
+                                    ? `<u>${escapeHTML(attribute.name)}</u>`
+                                    : escapeHTML(attribute.name)
                             }
 
-                            ${escapeHTML(attribute.name)}
+                        </span>
 
-                            <span style="opacity:0.6">
-                                ${escapeHTML(attribute.type)}
-                            </span>
+                        <span class="attribute-type">
 
-                        </div>
+                            ${escapeHTML(attribute.type)}
+
+                        </span>
 
                     `;
+
+
+                    const line =
+                        document.createElement("div");
+
+                    line.className =
+                        "er-line";
+
+
+                    attributeWrapper.appendChild(
+                        attributeOval
+                    );
+
+                    attributeWrapper.appendChild(
+                        line
+                    );
+
+
+                    const positions = [
+
+                        "attribute-top",
+
+                        "attribute-right",
+
+                        "attribute-bottom",
+
+                        "attribute-left"
+
+                    ];
+
+
+                    attributeWrapper.classList.add(
+
+                        positions[
+                            index %
+                            positions.length
+                        ]
+
+                    );
+
+
+                    wrapper.appendChild(
+                        attributeWrapper
+                    );
 
                 }
             );
 
 
-            entityBox.innerHTML = `
-
-                <div class="diagram-entity-title">
-                    ${escapeHTML(entity.name)}
-                </div>
-
-                ${attributesHTML}
-
-            `;
-
-
-            container.appendChild(entityBox);
+            canvas.appendChild(
+                wrapper
+            );
 
         }
     );
 
 
-    diagramArea.innerHTML = "";
-
-    diagramArea.appendChild(container);
+    diagramArea.appendChild(
+        canvas
+    );
 }
 
 
-/* =========================
+/* =========================================
    GENERATE SQL
-========================= */
+========================================= */
 
 generateBtn.addEventListener(
     "click",
@@ -554,7 +654,7 @@ generateBtn.addEventListener(
 
             showValidation(
                 "error",
-                "Add at least one entity before generating SQL."
+                "Add an entity before generating SQL."
             );
 
             return;
@@ -574,22 +674,22 @@ generateBtn.addEventListener(
                 entity.attributes.forEach(
                     (attribute, index) => {
 
-                        let sqlType =
+                        let type =
                             attribute.type;
 
 
                         if (
-                            sqlType === "VARCHAR"
+                            type === "VARCHAR"
                         ) {
 
-                            sqlType =
+                            type =
                                 "VARCHAR(100)";
 
                         }
 
 
                         let line =
-                            `    ${sanitizeSQLName(attribute.name)} ${sqlType}`;
+                            `    ${sanitizeSQLName(attribute.name)} ${type}`;
 
 
                         if (
@@ -639,9 +739,9 @@ generateBtn.addEventListener(
 );
 
 
-/* =========================
+/* =========================================
    COPY SQL
-========================= */
+========================================= */
 
 copyBtn.addEventListener(
     "click",
@@ -659,7 +759,7 @@ copyBtn.addEventListener(
 
             showValidation(
                 "error",
-                "Generate SQL before copying it."
+                "Generate SQL first."
             );
 
             return;
@@ -668,7 +768,9 @@ copyBtn.addEventListener(
 
         try {
 
-            await navigator.clipboard.writeText(sql);
+            await navigator.clipboard.writeText(
+                sql
+            );
 
 
             copyBtn.textContent =
@@ -686,11 +788,11 @@ copyBtn.addEventListener(
             );
 
 
-        } catch (error) {
+        } catch {
 
             showValidation(
                 "error",
-                "Unable to copy SQL automatically."
+                "Unable to copy SQL."
             );
 
         }
@@ -699,9 +801,9 @@ copyBtn.addEventListener(
 );
 
 
-/* =========================
+/* =========================================
    VALIDATION
-========================= */
+========================================= */
 
 function showValidation(
     type,
@@ -714,12 +816,14 @@ function showValidation(
             "rgba(255, 107, 122, 0.08)";
 
         validationBox.style.borderColor =
-            "rgba(255, 107, 122, 0.25)";
+            "rgba(255, 107, 122, 0.3)";
 
 
         validationBox.innerHTML = `
 
-            <strong style="color: var(--danger)">
+            <strong
+                style="color: var(--danger)"
+            >
                 Validation Error
             </strong>
 
@@ -735,7 +839,7 @@ function showValidation(
             "rgba(56, 211, 159, 0.08)";
 
         validationBox.style.borderColor =
-            "rgba(56, 211, 159, 0.25)";
+            "rgba(56, 211, 159, 0.3)";
 
 
         validationBox.innerHTML = `
@@ -755,9 +859,9 @@ function showValidation(
 }
 
 
-/* =========================
+/* =========================================
    THEME
-========================= */
+========================================= */
 
 themeBtn.addEventListener(
     "click",
@@ -788,9 +892,9 @@ themeBtn.addEventListener(
 );
 
 
-/* =========================
-   SECURITY
-========================= */
+/* =========================================
+   HTML ESCAPING
+========================================= */
 
 function escapeHTML(value) {
 
@@ -823,9 +927,9 @@ function escapeHTML(value) {
 }
 
 
-/* =========================
+/* =========================================
    SQL NAME CLEANING
-========================= */
+========================================= */
 
 function sanitizeSQLName(value) {
 
