@@ -272,6 +272,14 @@ button{font-family:inherit}
 }
 
 /* RELATIONSHIPS */
+.er-conn-line{
+    position:absolute;
+    height:2px;
+    background:var(--success);
+    transform-origin:0 50%;
+    z-index:2;
+    pointer-events:none;
+}
 .er-relationship{
     position:absolute;
     z-index:10;
