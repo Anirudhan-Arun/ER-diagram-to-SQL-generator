@@ -308,8 +308,47 @@ function renderDiagram(){
     });
 }
 
+function edgePoint(rect,cx,cy,tx,ty){
+    const halfW=rect.width/2;
+    const halfH=rect.height/2;
+    const dx=tx-cx;
+    const dy=ty-cy;
+
+    if(dx===0&&dy===0)return{x:cx,y:cy};
+
+    const scaleX=dx!==0?halfW/Math.abs(dx):Infinity;
+    const scaleY=dy!==0?halfH/Math.abs(dy):Infinity;
+    const scale=Math.min(scaleX,scaleY);
+
+    return{x:cx+dx*scale,y:cy+dy*scale};
+}
+
+function drawConnectorLine(canvas,x1,y1,x2,y2){
+    const length=Math.hypot(x2-x1,y2-y1);
+    const angle=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
+
+    const line=document.createElement("div");
+    line.className="er-conn-line";
+    line.style.width=`${length}px`;
+    line.style.left=`${x1}px`;
+    line.style.top=`${y1}px`;
+    line.style.transform=`rotate(${angle}deg)`;
+
+    canvas.appendChild(line);
+}
+
 function drawRelationships(canvas,positions){
-    canvas.querySelectorAll(".er-relationship").forEach(x=>x.remove());
+    canvas.querySelectorAll(".er-relationship,.er-conn-line").forEach(x=>x.remove());
+
+    const cRect=canvas.getBoundingClientRect();
+
+    const pairCounts={};
+    relationships.forEach(r=>{
+        const key=[r.from,r.to].sort().join("|");
+        pairCounts[key]=(pairCounts[key]||0)+1;
+    });
+
+    const pairSeen={};
 
     relationships.forEach((r,index)=>{
         const a=positions[r.from];
@@ -317,22 +356,44 @@ function drawRelationships(canvas,positions){
 
         if(!a||!b)return;
 
-        const aRect=a.getBoundingClientRect();
-        const bRect=b.getBoundingClientRect();
-        const cRect=canvas.getBoundingClientRect();
+        const aBox=a.querySelector(".er-entity");
+        const bBox=b.querySelector(".er-entity");
 
-        const ax=aRect.left+aRect.width/2-cRect.left;
-        const ay=aRect.top+aRect.height/2-cRect.top;
-        const bx=bRect.left+bRect.width/2-cRect.left;
-        const by=bRect.top+bRect.height/2-cRect.top;
+        const aRect=aBox.getBoundingClientRect();
+        const bRect=bBox.getBoundingClientRect();
 
-        const x=(ax+bx)/2;
-        const y=(ay+by)/2;
+        const acx=aRect.left+aRect.width/2-cRect.left;
+        const acy=aRect.top+aRect.height/2-cRect.top;
+        const bcx=bRect.left+bRect.width/2-cRect.left;
+        const bcy=bRect.top+bRect.height/2-cRect.top;
+
+        const key=[r.from,r.to].sort().join("|");
+        const countForPair=pairCounts[key];
+        const orderInPair=pairSeen[key]||0;
+        pairSeen[key]=orderInPair+1;
+
+        const dx=bcx-acx;
+        const dy=bcy-acy;
+        const dist=Math.hypot(dx,dy)||1;
+        const nx=-dy/dist;
+        const ny=dx/dist;
+
+        const offsetStep=90;
+        const offsetAmount=(orderInPair-(countForPair-1)/2)*offsetStep;
+
+        const midX=(acx+bcx)/2+nx*offsetAmount;
+        const midY=(acy+bcy)/2+ny*offsetAmount;
+
+        const startPoint=edgePoint(aRect,acx,acy,midX,midY);
+        const endPoint=edgePoint(bRect,bcx,bcy,midX,midY);
+
+        drawConnectorLine(canvas,startPoint.x,startPoint.y,midX,midY);
+        drawConnectorLine(canvas,midX,midY,endPoint.x,endPoint.y);
 
         const relationship=document.createElement("div");
         relationship.className="er-relationship";
-        relationship.style.left=`${x-55}px`;
-        relationship.style.top=`${y-55}px`;
+        relationship.style.left=`${midX-55}px`;
+        relationship.style.top=`${midY-55}px`;
 
         const diamond=document.createElement("div");
         diamond.className="relationship-diamond";
@@ -353,17 +414,6 @@ function drawRelationships(canvas,positions){
 
         relationship.appendChild(c1);
         relationship.appendChild(c2);
-
-        const line1=document.createElement("div");
-        line1.className="relationship-line";
-        line1.style.width=`${Math.max(50,Math.abs(bx-ax)/2-50)}px`;
-
-        const line2=document.createElement("div");
-        line2.className="relationship-line";
-        line2.style.width=`${Math.max(50,Math.abs(bx-ax)/2-50)}px`;
-
-        relationship.appendChild(line1);
-        relationship.appendChild(line2);
 
         canvas.appendChild(relationship);
     });
