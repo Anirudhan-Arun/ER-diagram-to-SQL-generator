@@ -12,7 +12,7 @@
 
 <body>
 
-    <!-- ================= HEADER ================= -->
+    <!-- HEADER -->
 
     <header class="topbar">
 
@@ -26,7 +26,11 @@
                 ● Review 1 Prototype
             </span>
 
-            <button id="themeBtn" class="theme-btn" title="Toggle theme">
+            <button
+                id="themeBtn"
+                class="theme-btn"
+                title="Toggle theme"
+            >
                 ☾
             </button>
 
@@ -35,18 +39,20 @@
     </header>
 
 
-    <!-- ================= MAIN DASHBOARD ================= -->
+    <!-- MAIN DASHBOARD -->
 
     <main class="dashboard">
 
 
-        <!-- ================= LEFT: INPUT ================= -->
+        <!-- INPUT PANEL -->
 
         <section class="panel input-panel">
 
             <div class="panel-title">
 
-                <h2>ER Diagram Input</h2>
+                <h2>
+                    ER Diagram Input
+                </h2>
 
                 <p>
                     Define entities and their attributes.
@@ -54,8 +60,6 @@
 
             </div>
 
-
-            <!-- ENTITY NAME -->
 
             <div class="form-group">
 
@@ -72,8 +76,6 @@
             </div>
 
 
-            <!-- ATTRIBUTES -->
-
             <div class="form-group">
 
                 <label for="attributes">
@@ -83,17 +85,16 @@
                 <input
                     type="text"
                     id="attributes"
-                    placeholder="e.g. student_id:INTEGER:PK, name:VARCHAR"
+                    placeholder="e.g. student_id, name, email"
                 >
 
                 <small>
-                    Format: attribute:TYPE. Add :PK to mark the primary key.
+                    Separate attributes using commas.
+                    Data types and primary keys are detected automatically.
                 </small>
 
             </div>
 
-
-            <!-- ADD ENTITY -->
 
             <button
                 id="addEntityBtn"
@@ -102,8 +103,6 @@
                 + Add Entity
             </button>
 
-
-            <!-- ENTITY LIST -->
 
             <div class="entity-list-section">
 
@@ -125,8 +124,6 @@
             </div>
 
 
-            <!-- GENERATE SQL -->
-
             <button
                 id="generateBtn"
                 class="generate-btn"
@@ -138,10 +135,9 @@
 
 
 
-        <!-- ================= CENTER: VISUALIZATION ================= -->
+        <!-- VISUALIZATION PANEL -->
 
         <section class="panel visualization-panel">
-
 
             <div class="panel-title">
 
@@ -163,8 +159,6 @@
 
             </div>
 
-
-            <!-- DIAGRAM -->
 
             <div
                 id="diagramArea"
@@ -191,16 +185,11 @@
             </div>
 
 
-            <!-- CONVERSION FLOW -->
-
             <div class="conversion-flow">
-
 
                 <div class="flow-step active">
 
-                    <span>
-                        1
-                    </span>
+                    <span>1</span>
 
                     Entities
 
@@ -214,9 +203,7 @@
 
                 <div class="flow-step">
 
-                    <span>
-                        2
-                    </span>
+                    <span>2</span>
 
                     Relations
 
@@ -230,9 +217,7 @@
 
                 <div class="flow-step">
 
-                    <span>
-                        3
-                    </span>
+                    <span>3</span>
 
                     SQL
 
@@ -244,10 +229,9 @@
 
 
 
-        <!-- ================= RIGHT: EXPLANATION ================= -->
+        <!-- EXPLANATION PANEL -->
 
         <section class="panel explanation-panel">
-
 
             <div class="panel-title">
 
@@ -261,8 +245,6 @@
 
             </div>
 
-
-            <!-- THEORY -->
 
             <div class="explanation-card">
 
@@ -287,8 +269,6 @@
             </div>
 
 
-            <!-- CONVERSION -->
-
             <div class="explanation-card">
 
                 <div class="info-icon">
@@ -298,21 +278,19 @@
                 <div>
 
                     <h3>
-                        How conversion works
+                        Automatic schema inference
                     </h3>
 
                     <p>
-                        Entities are converted into relational tables.
-                        Their attributes become columns and the
-                        selected primary key uniquely identifies rows.
+                        The prototype analyzes attribute names to
+                        automatically suggest suitable SQL data types
+                        and identify likely primary keys.
                     </p>
 
                 </div>
 
             </div>
 
-
-            <!-- VALIDATION -->
 
             <div
                 id="validationBox"
@@ -324,13 +302,11 @@
                 </strong>
 
                 <p>
-                    Add an entity with a primary key to begin.
+                    Add an entity to begin.
                 </p>
 
             </div>
 
-
-            <!-- FUTURE FEATURES -->
 
             <div class="future-feature">
 
@@ -352,10 +328,9 @@
 
 
 
-    <!-- ================= SQL OUTPUT ================= -->
+    <!-- SQL OUTPUT -->
 
     <section class="sql-section">
-
 
         <div class="sql-header">
 
@@ -388,8 +363,6 @@
 
 
 
-    <!-- ================= FOOTER ================= -->
-
     <footer>
 
         <p>
@@ -398,9 +371,6 @@
 
     </footer>
 
-
-
-    <!-- ================= JAVASCRIPT ================= -->
 
     <script src="script.js"></script>
 
