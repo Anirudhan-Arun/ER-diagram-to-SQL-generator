@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,32 +12,50 @@
 
 <body>
 
+    <!-- ================= HEADER ================= -->
+
     <header class="topbar">
+
         <div class="logo">
             <span>ER</span> → SQL Generator
         </div>
 
         <div class="header-right">
+
             <span class="status">
-                ● Prototype
+                ● Review 1 Prototype
             </span>
 
-            <button id="themeBtn" class="theme-btn">
+            <button id="themeBtn" class="theme-btn" title="Toggle theme">
                 ☾
             </button>
+
         </div>
+
     </header>
 
 
+    <!-- ================= MAIN DASHBOARD ================= -->
+
     <main class="dashboard">
 
-        <!-- LEFT PANEL -->
+
+        <!-- ================= LEFT: INPUT ================= -->
+
         <section class="panel input-panel">
 
             <div class="panel-title">
+
                 <h2>ER Diagram Input</h2>
-                <p>Define entities and their attributes.</p>
+
+                <p>
+                    Define entities and their attributes.
+                </p>
+
             </div>
+
+
+            <!-- ENTITY NAME -->
 
             <div class="form-group">
 
@@ -53,6 +72,8 @@
             </div>
 
 
+            <!-- ATTRIBUTES -->
+
             <div class="form-group">
 
                 <label for="attributes">
@@ -62,26 +83,38 @@
                 <input
                     type="text"
                     id="attributes"
-                    placeholder="e.g. student_id, name, email"
+                    placeholder="e.g. student_id:INTEGER:PK, name:VARCHAR"
                 >
 
                 <small>
-                    Separate attributes using commas.
+                    Format: attribute:TYPE. Add :PK to mark the primary key.
                 </small>
 
             </div>
 
 
-            <button id="addEntityBtn" class="primary-btn">
+            <!-- ADD ENTITY -->
+
+            <button
+                id="addEntityBtn"
+                class="primary-btn"
+            >
                 + Add Entity
             </button>
 
 
+            <!-- ENTITY LIST -->
+
             <div class="entity-list-section">
 
-                <h3>Entities</h3>
+                <h3>
+                    Entities
+                </h3>
 
-                <div id="entityList" class="entity-list">
+                <div
+                    id="entityList"
+                    class="entity-list"
+                >
 
                     <div class="empty-state">
                         No entities added yet.
@@ -92,7 +125,12 @@
             </div>
 
 
-            <button id="generateBtn" class="generate-btn">
+            <!-- GENERATE SQL -->
+
+            <button
+                id="generateBtn"
+                class="generate-btn"
+            >
                 Generate SQL →
             </button>
 
@@ -100,14 +138,23 @@
 
 
 
-        <!-- CENTER PANEL -->
+        <!-- ================= CENTER: VISUALIZATION ================= -->
+
         <section class="panel visualization-panel">
+
 
             <div class="panel-title">
 
                 <div>
-                    <h2>ER Diagram</h2>
-                    <p>Live visualization of your entities.</p>
+
+                    <h2>
+                        ER Diagram
+                    </h2>
+
+                    <p>
+                        Live visualization of your entities.
+                    </p>
+
                 </div>
 
                 <span class="step-badge">
@@ -117,7 +164,12 @@
             </div>
 
 
-            <div id="diagramArea" class="diagram-area">
+            <!-- DIAGRAM -->
+
+            <div
+                id="diagramArea"
+                class="diagram-area"
+            >
 
                 <div class="diagram-placeholder">
 
@@ -125,7 +177,9 @@
                         ◇
                     </div>
 
-                    <h3>Your ER diagram will appear here</h3>
+                    <h3>
+                        Your ER diagram will appear here
+                    </h3>
 
                     <p>
                         Add entities from the input panel
@@ -137,25 +191,51 @@
             </div>
 
 
+            <!-- CONVERSION FLOW -->
+
             <div class="conversion-flow">
 
+
                 <div class="flow-step active">
-                    <span>1</span>
+
+                    <span>
+                        1
+                    </span>
+
                     Entities
+
                 </div>
 
-                <div class="flow-arrow">→</div>
+
+                <div class="flow-arrow">
+                    →
+                </div>
+
 
                 <div class="flow-step">
-                    <span>2</span>
+
+                    <span>
+                        2
+                    </span>
+
                     Relations
+
                 </div>
 
-                <div class="flow-arrow">→</div>
+
+                <div class="flow-arrow">
+                    →
+                </div>
+
 
                 <div class="flow-step">
-                    <span>3</span>
+
+                    <span>
+                        3
+                    </span>
+
                     SQL
+
                 </div>
 
             </div>
@@ -164,12 +244,16 @@
 
 
 
-        <!-- RIGHT PANEL -->
+        <!-- ================= RIGHT: EXPLANATION ================= -->
+
         <section class="panel explanation-panel">
+
 
             <div class="panel-title">
 
-                <h2>Explanation</h2>
+                <h2>
+                    Explanation
+                </h2>
 
                 <span class="ai-badge">
                     AI Ready
@@ -177,6 +261,8 @@
 
             </div>
 
+
+            <!-- THEORY -->
 
             <div class="explanation-card">
 
@@ -186,7 +272,9 @@
 
                 <div>
 
-                    <h3>What is an ER Diagram?</h3>
+                    <h3>
+                        What is an ER Diagram?
+                    </h3>
 
                     <p>
                         An Entity-Relationship diagram is a visual
@@ -199,6 +287,8 @@
             </div>
 
 
+            <!-- CONVERSION -->
+
             <div class="explanation-card">
 
                 <div class="info-icon">
@@ -207,12 +297,14 @@
 
                 <div>
 
-                    <h3>How conversion works</h3>
+                    <h3>
+                        How conversion works
+                    </h3>
 
                     <p>
                         Entities are converted into relational tables.
-                        Their attributes become columns and a selected
-                        identifier becomes the primary key.
+                        Their attributes become columns and the
+                        selected primary key uniquely identifies rows.
                     </p>
 
                 </div>
@@ -220,24 +312,36 @@
             </div>
 
 
-            <div id="validationBox" class="validation-box">
+            <!-- VALIDATION -->
 
-                <strong>Validation</strong>
+            <div
+                id="validationBox"
+                class="validation-box"
+            >
+
+                <strong>
+                    Validation
+                </strong>
 
                 <p>
-                    Add at least one entity to begin.
+                    Add an entity with a primary key to begin.
                 </p>
 
             </div>
 
 
+            <!-- FUTURE FEATURES -->
+
             <div class="future-feature">
 
-                <span>COMING NEXT</span>
+                <span>
+                    DEVELOPMENT ROADMAP
+                </span>
 
                 <p>
-                    Relationships, foreign keys, step-by-step
-                    conversion, AI explanations and report export.
+                    Relationships and cardinality → foreign keys →
+                    step-by-step conversion → AI explanations →
+                    history and report export.
                 </p>
 
             </div>
@@ -248,20 +352,30 @@
 
 
 
-    <!-- SQL OUTPUT -->
+    <!-- ================= SQL OUTPUT ================= -->
 
     <section class="sql-section">
+
 
         <div class="sql-header">
 
             <div>
-                <h2>Generated SQL</h2>
+
+                <h2>
+                    Generated SQL
+                </h2>
+
                 <p>
                     SQL statements generated from your ER model.
                 </p>
+
             </div>
 
-            <button id="copyBtn" class="secondary-btn">
+
+            <button
+                id="copyBtn"
+                class="secondary-btn"
+            >
                 Copy SQL
             </button>
 
@@ -274,6 +388,8 @@
 
 
 
+    <!-- ================= FOOTER ================= -->
+
     <footer>
 
         <p>
@@ -283,7 +399,11 @@
     </footer>
 
 
+
+    <!-- ================= JAVASCRIPT ================= -->
+
     <script src="script.js"></script>
 
 </body>
+
 </html>
