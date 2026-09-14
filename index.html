@@ -45,7 +45,7 @@
   </div>
  </div>
 
- <div class="entity-list-section">
+ <div class="entity-list-section relationship-section">
   <h3>Relationships</h3>
 
   <select id="relFrom">
@@ -64,6 +64,12 @@
    <option value="N:1">N : 1 — Many to One</option>
    <option value="M:N">M : N — Many to Many</option>
   </select>
+
+  <div class="relationship-attributes-input">
+   <label>Relationship Attributes</label>
+   <input id="relationshipAttributes" type="text" placeholder="e.g. date, duration, room_no">
+   <small>Optional. Separate relationship attributes using commas.</small>
+  </div>
 
   <button id="addRelBtn" class="primary-btn">+ Add Relationship</button>
 
@@ -132,6 +138,14 @@
   <div>
    <h3>Cardinality</h3>
    <p>Cardinality describes how many instances of one entity can be associated with another entity.</p>
+  </div>
+ </div>
+
+ <div class="explanation-card">
+  <div class="info-icon">◇</div>
+  <div>
+   <h3>Relationship Attributes</h3>
+   <p>A relationship can have its own attributes. These are represented as ovals connected to the relationship diamond.</p>
   </div>
  </div>
 
