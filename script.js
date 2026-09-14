@@ -90,10 +90,6 @@ function showValidation(type, message) {
     `;
 }
 
-/* =========================================================
-   ADD ENTITY
-========================================================= */
-
 addEntityBtn.addEventListener("click", () => {
     const name = entityNameInput.value.trim();
     const text = attributesInput.value.trim();
@@ -138,10 +134,6 @@ addEntityBtn.addEventListener("click", () => {
     showValidation("success", `${name} added successfully.`);
 });
 
-/* =========================================================
-   ENTITY LIST
-========================================================= */
-
 function renderEntities() {
     if (!entities.length) {
         entityList.innerHTML = `<div class="empty-state">No entities added yet.</div>`;
@@ -185,10 +177,6 @@ function deleteEntity(index) {
     showValidation("success", `${removed.name} removed.`);
 }
 
-/* =========================================================
-   RELATIONSHIP SELECTORS
-========================================================= */
-
 function updateRelationshipSelectors() {
     if (!relFrom || !relTo) return;
 
@@ -215,10 +203,6 @@ function updateRelationshipSelectors() {
     if (entities.some(e => e.name === oldTo)) relTo.value = oldTo;
 }
 
-/* =========================================================
-   ADD RELATIONSHIP
-========================================================= */
-
 if (addRelBtn) {
     addRelBtn.addEventListener("click", () => {
         const from = relFrom.value;
@@ -236,6 +220,16 @@ if (addRelBtn) {
         const attributeNames = attributeText
             ? attributeText.split(",").map(x => x.trim()).filter(Boolean)
             : [];
+
+        const duplicateAttributes = attributeNames.some(
+            (name, index) =>
+                attributeNames.findIndex(
+                    x => x.toLowerCase() === name.toLowerCase()
+                ) !== index
+        );
+
+        if (duplicateAttributes)
+            return showValidation("error", "Relationship attributes must have unique names.");
 
         const relationshipAttributes = attributeNames.map(x => ({
             id: `rel_attr_${relationshipAttributeUid++}`,
@@ -286,10 +280,6 @@ if (addRelBtn) {
     });
 }
 
-/* =========================================================
-   RELATIONSHIP LIST
-========================================================= */
-
 function renderRelationshipList() {
     if (!relationshipList) return;
 
@@ -324,10 +314,6 @@ function deleteRelationship(index) {
     sqlGenerated = false;
     updateProgress();
 }
-
-/* =========================================================
-   DRAGGING
-========================================================= */
 
 let currentCanvasWidth = 0;
 let currentCanvasHeight = 0;
@@ -391,30 +377,45 @@ function makeDraggable(element, onMove) {
     element.addEventListener("pointercancel", stop);
 }
 
-/* =========================================================
-   EDGE INTERSECTION
-========================================================= */
-
 function rectEdgePoint(cx, cy, halfW, halfH, dx, dy) {
     if (dx === 0 && dy === 0) return { x: cx, y: cy };
+
     const scaleX = dx !== 0 ? halfW / Math.abs(dx) : Infinity;
     const scaleY = dy !== 0 ? halfH / Math.abs(dy) : Infinity;
     const scale = Math.min(scaleX, scaleY);
-    return { x: cx + dx * scale, y: cy + dy * scale };
+
+    return {
+        x: cx + dx * scale,
+        y: cy + dy * scale
+    };
 }
 
 function ellipseEdgePoint(cx, cy, halfW, halfH, dx, dy) {
     if (dx === 0 && dy === 0) return { x: cx, y: cy };
-    const denom = Math.sqrt((dx * dx) / (halfW * halfW) + (dy * dy) / (halfH * halfH));
+
+    const denom = Math.sqrt(
+        (dx * dx) / (halfW * halfW) +
+        (dy * dy) / (halfH * halfH)
+    );
+
     const t = denom === 0 ? 0 : 1 / denom;
-    return { x: cx + dx * t, y: cy + dy * t };
+
+    return {
+        x: cx + dx * t,
+        y: cy + dy * t
+    };
 }
 
 function diamondEdgePoint(cx, cy, halfW, halfH, dx, dy) {
     if (dx === 0 && dy === 0) return { x: cx, y: cy };
+
     const denom = Math.abs(dx) / halfW + Math.abs(dy) / halfH;
     const t = denom === 0 ? 0 : 1 / denom;
-    return { x: cx + dx * t, y: cy + dy * t };
+
+    return {
+        x: cx + dx * t,
+        y: cy + dy * t
+    };
 }
 
 function centerOf(el) {
@@ -425,10 +426,6 @@ function centerOf(el) {
         halfH: el.offsetHeight / 2
     };
 }
-
-/* =========================================================
-   ER DIAGRAM
-========================================================= */
 
 let entityEls = {};
 let attributeEls = [];
@@ -488,6 +485,7 @@ function renderDiagram() {
     svgLayer.style.pointerEvents = "none";
     svgLayer.style.overflow = "visible";
     svgLayer.style.zIndex = "50";
+
     canvas.appendChild(svgLayer);
 
     entities.forEach((entity, index) => {
@@ -507,9 +505,10 @@ function renderDiagram() {
         const entityBox = document.createElement("div");
         entityBox.className = "er-entity";
         entityBox.textContent = entity.name;
-        wrapper.appendChild(entityBox);
 
+        wrapper.appendChild(entityBox);
         canvas.appendChild(wrapper);
+
         entityEls[entity.name] = wrapper;
 
         makeDraggable(wrapper, (newLeft, newTop) => {
@@ -530,8 +529,17 @@ function renderDiagram() {
             const anchor = anchorOffsets[attributeIndex % 4];
             const ringPadding = ring * 90;
 
-            const defaultAX = attribute.x ?? (defaultX + anchor.dx + (anchor.dx < 0 ? -ringPadding : anchor.dx > 100 ? ringPadding : 0));
-            const defaultAY = attribute.y ?? (defaultY + anchor.dy + (anchor.dy < 0 ? -ringPadding : ringPadding));
+            const defaultAX = attribute.x ?? (
+                defaultX +
+                anchor.dx +
+                (anchor.dx < 0 ? -ringPadding : anchor.dx > 100 ? ringPadding : 0)
+            );
+
+            const defaultAY = attribute.y ?? (
+                defaultY +
+                anchor.dy +
+                (anchor.dy < 0 ? -ringPadding : ringPadding)
+            );
 
             attribute.x = defaultAX;
             attribute.y = defaultAY;
@@ -546,7 +554,8 @@ function renderDiagram() {
             const attrOval = document.createElement("div");
             attrOval.className = "er-attribute";
 
-            if (attribute.primaryKey) attrOval.classList.add("primary-key");
+            if (attribute.primaryKey)
+                attrOval.classList.add("primary-key");
 
             attrOval.innerHTML = `
                 <span class="attribute-name">${attribute.primaryKey ? `<u>${escapeHTML(attribute.name)}</u>` : escapeHTML(attribute.name)}</span>
@@ -611,6 +620,7 @@ function renderDiagram() {
         label.textContent = relationship.name && relationship.name.trim()
             ? relationship.name.trim()
             : "RELATES";
+
         label.style.position = "absolute";
         label.style.maxWidth = "80px";
         label.style.textAlign = "center";
@@ -649,11 +659,15 @@ function renderDiagram() {
                 const anchor = anglePositions[attributeIndex % anglePositions.length];
 
                 const defaultAX = attribute.x ?? (
-                    relationship.x + anchor.dx + (ring * 100 * Math.sign(anchor.dx || 1))
+                    relationship.x +
+                    anchor.dx +
+                    (ring * 100 * Math.sign(anchor.dx || 1))
                 );
 
                 const defaultAY = attribute.y ?? (
-                    relationship.y + anchor.dy + (ring * 70 * Math.sign(anchor.dy || 1))
+                    relationship.y +
+                    anchor.dy +
+                    (ring * 70 * Math.sign(anchor.dy || 1))
                 );
 
                 attribute.x = defaultAX;
@@ -700,10 +714,6 @@ function renderDiagram() {
         redrawConnections();
     });
 }
-
-/* =========================================================
-   SVG CONNECTIONS
-========================================================= */
 
 function createSVGEl(type) {
     return document.createElementNS("http://www.w3.org/2000/svg", type);
@@ -847,7 +857,8 @@ function drawDraggableConnector(anchorStart, anchorEnd, holder, keys) {
 function redrawConnections() {
     if (!svgLayer) return;
 
-    while (svgLayer.firstChild) svgLayer.removeChild(svgLayer.firstChild);
+    while (svgLayer.firstChild)
+        svgLayer.removeChild(svgLayer.firstChild);
 
     attributeEls.forEach(({ el, entityName, attribute }) => {
         const entityEl = entityEls[entityName];
@@ -1058,10 +1069,6 @@ function pointAlong(a, b, t, offset) {
     };
 }
 
-/* =========================================================
-   RESET LAYOUT
-========================================================= */
-
 function resetLayout() {
     if (!entities.length)
         return showValidation("error", "Add an entity first.");
@@ -1120,10 +1127,6 @@ function resetLayout() {
 
 if (resetLayoutBtn) resetLayoutBtn.addEventListener("click", resetLayout);
 
-/* =========================================================
-   CARDINALITY
-========================================================= */
-
 function getCardinalities(type) {
     if (type === "1:1") return { from: "1", to: "1" };
     if (type === "1:N") return { from: "1", to: "N" };
@@ -1132,10 +1135,6 @@ function getCardinalities(type) {
 
     return { from: "", to: "" };
 }
-
-/* =========================================================
-   SQL HELPERS
-========================================================= */
 
 function sqlType(type) {
     if (type === "VARCHAR") return "VARCHAR(100)";
@@ -1153,7 +1152,8 @@ function getRelationshipForeignKey(relationship, from, to) {
             entity: to,
             target: from,
             column: `${sanitizeSQLName(from.name)}_${sanitizeSQLName(fromPK.name)}`,
-            targetColumn: sanitizeSQLName(fromPK.name)
+            targetColumn: sanitizeSQLName(fromPK.name),
+            targetType: fromPK.type
         };
     }
 
@@ -1162,7 +1162,8 @@ function getRelationshipForeignKey(relationship, from, to) {
             entity: from,
             target: to,
             column: `${sanitizeSQLName(to.name)}_${sanitizeSQLName(toPK.name)}`,
-            targetColumn: sanitizeSQLName(toPK.name)
+            targetColumn: sanitizeSQLName(toPK.name),
+            targetType: toPK.type
         };
     }
 
@@ -1171,7 +1172,8 @@ function getRelationshipForeignKey(relationship, from, to) {
             entity: to,
             target: from,
             column: `${sanitizeSQLName(from.name)}_${sanitizeSQLName(fromPK.name)}`,
-            targetColumn: sanitizeSQLName(fromPK.name)
+            targetColumn: sanitizeSQLName(fromPK.name),
+            targetType: fromPK.type
         };
     }
 
@@ -1181,10 +1183,6 @@ function getRelationshipForeignKey(relationship, from, to) {
 function addColumnDefinition(lines, name, type, extra = "") {
     lines.push(`    ${sanitizeSQLName(name)} ${sqlType(type)}${extra}`);
 }
-
-/* =========================================================
-   GENERATE SQL
-========================================================= */
 
 generateBtn.addEventListener("click", () => {
     if (!entities.length)
@@ -1238,18 +1236,25 @@ generateBtn.addEventListener("click", () => {
             addColumnDefinition(
                 lines,
                 fk.column,
-                "INTEGER",
-                unique
+                fk.targetType,
+                `${unique} REFERENCES ${sanitizeSQLName(fk.target.name)}(${sanitizeSQLName(fk.targetColumn)})`
             );
+        });
+
+        foreignKeys.forEach(fk => {
+            if (!fk.relationship.attributes || !fk.relationship.attributes.length)
+                return;
+
+            fk.relationship.attributes.forEach(attribute => {
+                addColumnDefinition(
+                    lines,
+                    attribute.name,
+                    attribute.type
+                );
+            });
         });
 
         const tableName = sanitizeSQLName(entity.name);
-
-        foreignKeys.forEach(fk => {
-            lines.push(
-                `    FOREIGN KEY (${sanitizeSQLName(fk.column)}) REFERENCES ${sanitizeSQLName(fk.target.name)}(${sanitizeSQLName(fk.targetColumn)})`
-            );
-        });
 
         const formattedLines = lines.map((line, index) => {
             return index < lines.length - 1 ? line + "," : line;
@@ -1287,8 +1292,8 @@ generateBtn.addEventListener("click", () => {
 
         const lines = [];
 
-        lines.push(`    ${fromColumn} INTEGER`);
-        lines.push(`    ${toColumn} INTEGER`);
+        lines.push(`    ${fromColumn} ${sqlType(fromPK.type)}`);
+        lines.push(`    ${toColumn} ${sqlType(toPK.type)}`);
 
         if (relationship.attributes) {
             relationship.attributes.forEach(attribute => {
@@ -1317,34 +1322,6 @@ generateBtn.addEventListener("click", () => {
         sql += `\n);\n\n`;
     });
 
-    relationships.forEach(relationship => {
-        if (relationship.type === "M:N") return;
-
-        if (!relationship.attributes || !relationship.attributes.length)
-            return;
-
-        const from = entities.find(e => e.name === relationship.from);
-        const to = entities.find(e => e.name === relationship.to);
-
-        if (!from || !to) return;
-
-        const fk = getRelationshipForeignKey(
-            relationship,
-            from,
-            to
-        );
-
-        if (!fk) return;
-
-        sql += `-- Relationship attributes for ${sanitizeSQLName(relationship.name)}\n`;
-
-        relationship.attributes.forEach(attribute => {
-            sql += `-- ${sanitizeSQLName(fk.entity.name)}.${sanitizeSQLName(attribute.name)} ${sqlType(attribute.type)}\n`;
-        });
-
-        sql += `\n`;
-    });
-
     sqlOutput.textContent = sql.trim();
 
     sqlGenerated = true;
@@ -1355,10 +1332,6 @@ generateBtn.addEventListener("click", () => {
         "SQL generated successfully from the ER model."
     );
 });
-
-/* =========================================================
-   COPY SQL
-========================================================= */
 
 copyBtn.addEventListener("click", async () => {
     const sql = sqlOutput.textContent;
@@ -1379,10 +1352,6 @@ copyBtn.addEventListener("click", async () => {
     }
 });
 
-/* =========================================================
-   THEME
-========================================================= */
-
 themeBtn.addEventListener("click", () => {
     document.body.classList.toggle("light");
 
@@ -1394,10 +1363,6 @@ themeBtn.addEventListener("click", () => {
     if (entities.length)
         redrawConnections();
 });
-
-/* =========================================================
-   INITIALIZATION
-========================================================= */
 
 updateRelationshipSelectors();
 renderEntities();
