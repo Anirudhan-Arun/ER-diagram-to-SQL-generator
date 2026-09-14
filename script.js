@@ -1358,7 +1358,7 @@ generateBtn.addEventListener(
 
 
                     if (
-                        index 
+                        index <
                         entity.attributes.length - 1
                     ) {
                         line += ",";
