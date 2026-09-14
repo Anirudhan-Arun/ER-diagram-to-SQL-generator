@@ -11,6 +11,7 @@ const sqlOutput = document.getElementById("sqlOutput");
 const validationBox = document.getElementById("validationBox");
 const copyBtn = document.getElementById("copyBtn");
 const themeBtn = document.getElementById("themeBtn");
+const resetLayoutBtn = document.getElementById("resetLayoutBtn");
 
 const relFrom = document.getElementById("relFrom");
 const relName = document.getElementById("relName");
@@ -392,12 +393,6 @@ if (addRelBtn) {
         const to = relTo.value;
         const type = relType.value;
 
-        /*
-         * IMPORTANT:
-         * Your HTML already has relName.
-         * We now actually read it.
-         */
-
         const name = relName
             ? relName.value.trim()
             : "";
@@ -444,12 +439,7 @@ if (addRelBtn) {
 
             from,
             to,
-
-            /*
-             * Relationship name is now stored.
-             */
             name,
-
             type,
 
             /*
@@ -562,6 +552,8 @@ function makeDraggable(element, onMove) {
 
         dragging = true;
 
+        element.classList.add("dragging");
+
         element.setPointerCapture(e.pointerId);
 
         startX = e.clientX;
@@ -576,6 +568,7 @@ function makeDraggable(element, onMove) {
         element.style.cursor = "grabbing";
 
         e.preventDefault();
+        e.stopPropagation();
     });
 
     element.addEventListener("pointermove", e => {
@@ -605,18 +598,24 @@ function makeDraggable(element, onMove) {
         if (onMove) {
             onMove();
         }
+
+        e.stopPropagation();
     });
 
-    element.addEventListener("pointerup", () => {
+    element.addEventListener("pointerup", e => {
 
         dragging = false;
         element.style.cursor = "grab";
+        element.classList.remove("dragging");
+        e.stopPropagation();
     });
 
-    element.addEventListener("pointercancel", () => {
+    element.addEventListener("pointercancel", e => {
 
         dragging = false;
         element.style.cursor = "grab";
+        element.classList.remove("dragging");
+        e.stopPropagation();
     });
 }
 
@@ -658,9 +657,20 @@ function renderDiagram() {
 
     canvas.className = "er-canvas";
 
-    /*
-     * SVG is used only for relationships.
-     */
+    const COLUMNS = Math.min(3, entities.length) || 1;
+    const COL_SPACING = 620;
+    const ROW_SPACING = 520;
+    const START_X = 160;
+    const START_Y = 160;
+
+    const rows = Math.ceil(entities.length / COLUMNS);
+
+    const canvasWidth = Math.max(1800, START_X * 2 + COLUMNS * COL_SPACING);
+    const canvasHeight = Math.max(1300, START_Y * 2 + rows * ROW_SPACING);
+
+    canvas.style.minWidth = canvasWidth + "px";
+    canvas.style.minHeight = canvasHeight + "px";
+
     const svg =
         document.createElementNS(
             "http://www.w3.org/2000/svg",
@@ -672,8 +682,8 @@ function renderDiagram() {
     svg.style.position = "absolute";
     svg.style.left = "0";
     svg.style.top = "0";
-    svg.style.width = "100%";
-    svg.style.height = "100%";
+    svg.style.width = canvasWidth + "px";
+    svg.style.height = canvasHeight + "px";
     svg.style.pointerEvents = "none";
     svg.style.overflow = "visible";
 
@@ -681,10 +691,6 @@ function renderDiagram() {
 
     const positions = {};
 
-
-    /* =====================================================
-       ENTITIES
-    ===================================================== */
 
     entities.forEach((entity, index) => {
 
@@ -695,12 +701,10 @@ function renderDiagram() {
             "er-entity-wrapper";
 
         const defaultX =
-            index % 2 === 0
-                ? 100
-                : 600;
+            START_X + (index % COLUMNS) * COL_SPACING;
 
         const defaultY =
-            Math.floor(index / 2) * 250 + 100;
+            START_Y + Math.floor(index / COLUMNS) * ROW_SPACING;
 
         wrapper.dataset.x = defaultX;
         wrapper.dataset.y = defaultY;
@@ -713,8 +717,6 @@ function renderDiagram() {
         wrapper.style.cursor = "grab";
 
 
-        /* ENTITY RECTANGLE */
-
         const entityBox =
             document.createElement("div");
 
@@ -725,10 +727,6 @@ function renderDiagram() {
 
         wrapper.appendChild(entityBox);
 
-
-        /* =================================================
-           ATTRIBUTES
-        ================================================= */
 
         entity.attributes.forEach(
             (attribute, attributeIndex) => {
@@ -793,9 +791,6 @@ function renderDiagram() {
                 );
 
 
-                /*
-                 * Attribute dragging remains intact.
-                 */
                 attributeWrapper.dataset.x = 0;
                 attributeWrapper.dataset.y = 0;
 
@@ -803,10 +798,6 @@ function renderDiagram() {
                     attributeWrapper,
                     () => {
 
-                        /*
-                         * Keep the attribute attached
-                         * visually to its entity.
-                         */
                         line.style.display = "block";
                     }
                 );
@@ -831,11 +822,6 @@ function renderDiagram() {
         };
 
 
-        /*
-         * Entity dragging.
-         *
-         * This is preserved.
-         */
         makeDraggable(
             wrapper,
             () => {
@@ -845,15 +831,8 @@ function renderDiagram() {
     });
 
 
-    /* =====================================================
-       RELATIONSHIP DRAWING
-    ===================================================== */
-
     function drawAllRelationships() {
 
-        /*
-         * Remove old SVG objects.
-         */
         while (svg.firstChild) {
             svg.removeChild(svg.firstChild);
         }
@@ -902,13 +881,6 @@ function renderDiagram() {
             toPosition.element;
 
 
-        /*
-         * Entity center positions.
-         *
-         * Dataset coordinates are used because
-         * the entities are absolutely positioned.
-         */
-
         const fromX =
             fromEl.offsetLeft +
             fromEl.offsetWidth / 2 +
@@ -945,10 +917,7 @@ function renderDiagram() {
         const uy = dy / distance;
 
 
-        /*
-         * Start/end of relationship lines.
-         */
-        const entityDistance = 100;
+        const entityDistance = 170;
 
         const startX =
             fromX +
@@ -967,9 +936,6 @@ function renderDiagram() {
             uy * entityDistance;
 
 
-        /*
-         * Base midpoint.
-         */
         let middleX =
             (startX + endX) / 2;
 
@@ -977,12 +943,6 @@ function renderDiagram() {
             (startY + endY) / 2;
 
 
-        /*
-         * IMPORTANT FIX:
-         *
-         * Actually use the offset created
-         * when the relationship is dragged.
-         */
         middleX +=
             relationship.offsetX || 0;
 
@@ -990,15 +950,8 @@ function renderDiagram() {
             relationship.offsetY || 0;
 
 
-        /*
-         * Diamond dimensions.
-         */
-        const diamondHalf = 38;
+        const diamondHalf = 42;
 
-        /*
-         * Diamond is rotated 45 degrees,
-         * so these four points make a proper diamond.
-         */
         const p1 =
             `${middleX},${middleY - diamondHalf}`;
 
@@ -1012,97 +965,36 @@ function renderDiagram() {
             `${middleX - diamondHalf},${middleY}`;
 
 
-        /* =================================================
-           LINE 1
-        ================================================= */
-
         const line1 =
             createSVGElement("line");
 
-        line1.setAttribute(
-            "x1",
-            startX
-        );
-
-        line1.setAttribute(
-            "y1",
-            startY
-        );
-
-        line1.setAttribute(
-            "x2",
-            middleX - diamondHalf
-        );
-
-        line1.setAttribute(
-            "y2",
-            middleY
-        );
-
-        line1.setAttribute(
-            "stroke",
-            "#8c99af"
-        );
-
-        line1.setAttribute(
-            "stroke-width",
-            "2"
-        );
+        line1.setAttribute("x1", startX);
+        line1.setAttribute("y1", startY);
+        line1.setAttribute("x2", middleX - diamondHalf);
+        line1.setAttribute("y2", middleY);
+        line1.setAttribute("stroke", "#8c99af");
+        line1.setAttribute("stroke-width", "2");
 
         svg.appendChild(line1);
 
 
-        /* =================================================
-           LINE 2
-        ================================================= */
-
         const line2 =
             createSVGElement("line");
 
-        line2.setAttribute(
-            "x1",
-            middleX + diamondHalf
-        );
-
-        line2.setAttribute(
-            "y1",
-            middleY
-        );
-
-        line2.setAttribute(
-            "x2",
-            endX
-        );
-
-        line2.setAttribute(
-            "y2",
-            endY
-        );
-
-        line2.setAttribute(
-            "stroke",
-            "#8c99af"
-        );
-
-        line2.setAttribute(
-            "stroke-width",
-            "2"
-        );
+        line2.setAttribute("x1", middleX + diamondHalf);
+        line2.setAttribute("y1", middleY);
+        line2.setAttribute("x2", endX);
+        line2.setAttribute("y2", endY);
+        line2.setAttribute("stroke", "#8c99af");
+        line2.setAttribute("stroke-width", "2");
 
         svg.appendChild(line2);
 
 
-        /* =================================================
-           DIAMOND
-        ================================================= */
-
         const diamond =
             createSVGElement("polygon");
 
-        diamond.setAttribute(
-            "points",
-            `${p1} ${p2} ${p3} ${p4}`
-        );
+        diamond.setAttribute("points", `${p1} ${p2} ${p3} ${p4}`);
 
         diamond.setAttribute(
             "fill",
@@ -1111,40 +1003,18 @@ function renderDiagram() {
                 : "#11182b"
         );
 
-        diamond.setAttribute(
-            "stroke",
-            "#38d39f"
-        );
-
-        diamond.setAttribute(
-            "stroke-width",
-            "2"
-        );
+        diamond.setAttribute("stroke", "#38d39f");
+        diamond.setAttribute("stroke-width", "2");
 
         svg.appendChild(diamond);
 
 
-        /* =================================================
-           RELATIONSHIP NAME
-        ================================================= */
-
         const relationshipText =
             createSVGElement("text");
 
-        relationshipText.setAttribute(
-            "x",
-            middleX
-        );
-
-        relationshipText.setAttribute(
-            "y",
-            middleY + 4
-        );
-
-        relationshipText.setAttribute(
-            "text-anchor",
-            "middle"
-        );
+        relationshipText.setAttribute("x", middleX);
+        relationshipText.setAttribute("y", middleY + 4);
+        relationshipText.setAttribute("text-anchor", "middle");
 
         relationshipText.setAttribute(
             "fill",
@@ -1153,261 +1023,103 @@ function renderDiagram() {
                 : "#f4f7fb"
         );
 
-        relationshipText.setAttribute(
-            "font-size",
-            "11"
-        );
+        relationshipText.setAttribute("font-size", "11");
+        relationshipText.setAttribute("font-weight", "700");
 
-        relationshipText.setAttribute(
-            "font-weight",
-            "700"
-        );
-
-        /*
-         * Relationship name is INSIDE the diamond.
-         */
         relationshipText.textContent =
-            getRelationshipName(
-                relationship
-            );
+            getRelationshipName(relationship);
 
-        svg.appendChild(
-            relationshipText
-        );
+        svg.appendChild(relationshipText);
 
-
-        /* =================================================
-           CARDINALITY
-        ================================================= */
 
         const cardinalities =
-            getCardinalities(
-                relationship.type
-            );
+            getCardinalities(relationship.type);
 
 
-        /*
-         * Direction vector of first line.
-         */
-        const line1dx =
-            middleX -
-            diamondHalf -
-            startX;
-
-        const line1dy =
-            middleY -
-            startY;
+        const line1dx = middleX - diamondHalf - startX;
+        const line1dy = middleY - startY;
 
         const line1distance =
-            Math.sqrt(
-                line1dx * line1dx +
-                line1dy * line1dy
-            ) || 1;
+            Math.sqrt(line1dx * line1dx + line1dy * line1dy) || 1;
 
 
-        /*
-         * Direction vector of second line.
-         */
-        const line2dx =
-            endX -
-            (middleX + diamondHalf);
-
-        const line2dy =
-            endY -
-            middleY;
+        const line2dx = endX - (middleX + diamondHalf);
+        const line2dy = endY - middleY;
 
         const line2distance =
-            Math.sqrt(
-                line2dx * line2dx +
-                line2dy * line2dy
-            ) || 1;
+            Math.sqrt(line2dx * line2dx + line2dy * line2dy) || 1;
 
 
-        /*
-         * Perpendicular vector.
-         *
-         * This puts cardinality beside/above
-         * the relationship line instead of
-         * inside the diamond.
-         */
-        const normal1X =
-            -line1dy / line1distance;
+        const normal1X = -line1dy / line1distance;
+        const normal1Y = line1dx / line1distance;
 
-        const normal1Y =
-            line1dx / line1distance;
-
-        const normal2X =
-            -line2dy / line2distance;
-
-        const normal2Y =
-            line2dx / line2distance;
+        const normal2X = -line2dy / line2distance;
+        const normal2Y = line2dx / line2distance;
 
 
-        /*
-         * Put labels close to their respective
-         * entities, but above the lines.
-         */
-        const labelDistance = 18;
+        const labelDistance = 22;
 
         const firstLabelX =
-            startX +
-            line1dx * 0.35 +
-            normal1X * labelDistance;
+            startX + line1dx * 0.35 + normal1X * labelDistance;
 
         const firstLabelY =
-            startY +
-            line1dy * 0.35 +
-            normal1Y * labelDistance;
+            startY + line1dy * 0.35 + normal1Y * labelDistance;
 
 
         const secondLabelX =
-            middleX +
-            diamondHalf +
-            line2dx * 0.35 +
-            normal2X * labelDistance;
+            middleX + diamondHalf + line2dx * 0.35 + normal2X * labelDistance;
 
         const secondLabelY =
-            middleY +
-            line2dy * 0.35 +
-            normal2Y * labelDistance;
+            middleY + line2dy * 0.35 + normal2Y * labelDistance;
 
-
-        /* FROM CARDINALITY */
 
         const fromCardinality =
             createSVGElement("text");
 
-        fromCardinality.setAttribute(
-            "x",
-            firstLabelX
-        );
+        fromCardinality.setAttribute("x", firstLabelX);
+        fromCardinality.setAttribute("y", firstLabelY);
+        fromCardinality.setAttribute("text-anchor", "middle");
+        fromCardinality.setAttribute("fill", "#38d39f");
+        fromCardinality.setAttribute("font-size", "14");
+        fromCardinality.setAttribute("font-weight", "800");
 
-        fromCardinality.setAttribute(
-            "y",
-            firstLabelY
-        );
+        fromCardinality.textContent = cardinalities.from;
 
-        fromCardinality.setAttribute(
-            "text-anchor",
-            "middle"
-        );
+        svg.appendChild(fromCardinality);
 
-        fromCardinality.setAttribute(
-            "fill",
-            "#38d39f"
-        );
-
-        fromCardinality.setAttribute(
-            "font-size",
-            "14"
-        );
-
-        fromCardinality.setAttribute(
-            "font-weight",
-            "800"
-        );
-
-        fromCardinality.textContent =
-            cardinalities.from;
-
-        svg.appendChild(
-            fromCardinality
-        );
-
-
-        /* TO CARDINALITY */
 
         const toCardinality =
             createSVGElement("text");
 
-        toCardinality.setAttribute(
-            "x",
-            secondLabelX
-        );
+        toCardinality.setAttribute("x", secondLabelX);
+        toCardinality.setAttribute("y", secondLabelY);
+        toCardinality.setAttribute("text-anchor", "middle");
+        toCardinality.setAttribute("fill", "#38d39f");
+        toCardinality.setAttribute("font-size", "14");
+        toCardinality.setAttribute("font-weight", "800");
 
-        toCardinality.setAttribute(
-            "y",
-            secondLabelY
-        );
+        toCardinality.textContent = cardinalities.to;
 
-        toCardinality.setAttribute(
-            "text-anchor",
-            "middle"
-        );
+        svg.appendChild(toCardinality);
 
-        toCardinality.setAttribute(
-            "fill",
-            "#38d39f"
-        );
-
-        toCardinality.setAttribute(
-            "font-size",
-            "14"
-        );
-
-        toCardinality.setAttribute(
-            "font-weight",
-            "800"
-        );
-
-        toCardinality.textContent =
-            cardinalities.to;
-
-        svg.appendChild(
-            toCardinality
-        );
-
-
-        /* =================================================
-           RELATIONSHIP DRAG HIT AREA
-        ================================================= */
 
         const hitArea =
             createSVGElement("circle");
 
-        hitArea.setAttribute(
-            "cx",
-            middleX
-        );
+        hitArea.setAttribute("cx", middleX);
+        hitArea.setAttribute("cy", middleY);
+        hitArea.setAttribute("r", "46");
+        hitArea.setAttribute("fill", "transparent");
 
-        hitArea.setAttribute(
-            "cy",
-            middleY
-        );
-
-        hitArea.setAttribute(
-            "r",
-            "42"
-        );
-
-        hitArea.setAttribute(
-            "fill",
-            "transparent"
-        );
-
-        /*
-         * This is the ONLY SVG object that
-         * receives pointer events.
-         */
         hitArea.style.pointerEvents = "all";
         hitArea.style.cursor = "grab";
 
         svg.appendChild(hitArea);
 
 
-        /*
-         * Relationship remains draggable.
-         */
-        makeRelationshipDraggable(
-            hitArea,
-            relationship
-        );
+        makeRelationshipDraggable(hitArea, relationship);
     }
 
-
-    /* =====================================================
-       RELATIONSHIP DRAGGING
-    ===================================================== */
 
     function makeRelationshipDraggable(
         element,
@@ -1429,12 +1141,9 @@ function renderDiagram() {
                 startX = e.clientX;
                 startY = e.clientY;
 
-                element.setPointerCapture(
-                    e.pointerId
-                );
+                element.setPointerCapture(e.pointerId);
 
-                element.style.cursor =
-                    "grabbing";
+                element.style.cursor = "grabbing";
 
                 e.preventDefault();
                 e.stopPropagation();
@@ -1450,72 +1159,89 @@ function renderDiagram() {
                     return;
                 }
 
-                const dx =
-                    e.clientX - startX;
-
-                const dy =
-                    e.clientY - startY;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
 
 
-                /*
-                 * Store the movement.
-                 */
                 relationship.offsetX =
-                    (relationship.offsetX || 0) +
-                    dx;
+                    (relationship.offsetX || 0) + dx;
 
                 relationship.offsetY =
-                    (relationship.offsetY || 0) +
-                    dy;
+                    (relationship.offsetY || 0) + dy;
 
 
                 startX = e.clientX;
                 startY = e.clientY;
 
 
-                /*
-                 * Redraw everything using
-                 * the updated offset.
-                 */
                 drawAllRelationships();
+
+                e.stopPropagation();
             }
         );
 
 
         element.addEventListener(
             "pointerup",
-            () => {
+            e => {
 
                 dragging = false;
-
-                element.style.cursor =
-                    "grab";
+                element.style.cursor = "grab";
+                e.stopPropagation();
             }
         );
 
 
         element.addEventListener(
             "pointercancel",
-            () => {
+            e => {
 
                 dragging = false;
-
-                element.style.cursor =
-                    "grab";
+                element.style.cursor = "grab";
+                e.stopPropagation();
             }
         );
     }
 
 
-    /*
-     * Initial relationship drawing.
-     */
     setTimeout(() => {
         drawAllRelationships();
     }, 50);
 
 
     diagramArea.appendChild(canvas);
+}
+
+
+/* =========================================================
+   RESET LAYOUT
+========================================================= */
+
+function resetLayout() {
+
+    if (!entities.length) {
+        showValidation(
+            "error",
+            "Add an entity first."
+        );
+        return;
+    }
+
+    relationships.forEach(r => {
+        r.offsetX = 0;
+        r.offsetY = 0;
+    });
+
+    renderDiagram();
+
+    showValidation(
+        "success",
+        "Layout reset to default positions."
+    );
+}
+
+if (resetLayoutBtn) {
+    resetLayoutBtn.addEventListener("click", resetLayout);
 }
 
 
@@ -1605,10 +1331,6 @@ generateBtn.addEventListener(
         let sql = "";
 
 
-        /* =================================================
-           ENTITY TABLES
-        ================================================= */
-
         entities.forEach(entity => {
 
             sql +=
@@ -1635,14 +1357,8 @@ generateBtn.addEventListener(
                     }
 
 
-                    /*
-                     * Add comma unless this is
-                     * the last attribute and no
-                     * additional constraints follow.
-                     */
-
                     if (
-                        index <
+                        index 
                         entity.attributes.length - 1
                     ) {
                         line += ",";
@@ -1657,10 +1373,6 @@ generateBtn.addEventListener(
             sql += ");\n\n";
         });
 
-
-        /* =================================================
-           RELATIONSHIPS
-        ================================================= */
 
         relationships.forEach(
             relationship => {
@@ -1705,10 +1417,6 @@ generateBtn.addEventListener(
                     relationship.type;
 
 
-                /* =========================================
-                   MANY TO MANY
-                   ========================================= */
-
                 if (type === "M:N") {
 
                     const tableName =
@@ -1751,10 +1459,6 @@ generateBtn.addEventListener(
                 }
 
 
-                /* =========================================
-                   ONE TO MANY
-                   ========================================= */
-
                 if (type === "1:N") {
 
                     sql +=
@@ -1770,10 +1474,6 @@ generateBtn.addEventListener(
                 }
 
 
-                /* =========================================
-                   MANY TO ONE
-                   ========================================= */
-
                 if (type === "N:1") {
 
                     sql +=
@@ -1788,10 +1488,6 @@ generateBtn.addEventListener(
                     return;
                 }
 
-
-                /* =========================================
-                   ONE TO ONE
-                   ========================================= */
 
                 if (type === "1:1") {
 
@@ -1899,10 +1595,6 @@ themeBtn.addEventListener(
                 : "☾";
 
 
-        /*
-         * Redraw SVG so the diamond/text
-         * uses the correct light/dark colors.
-         */
         if (entities.length) {
             renderDiagram();
         }
