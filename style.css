@@ -135,7 +135,22 @@ button{font-family:inherit}
     color:var(--danger);cursor:pointer;font-size:18px;
 }
 
-/* DIAGRAM */
+/* DIAGRAM TOOLBAR */
+.diagram-toolbar{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:10px;
+}
+.small-btn{
+    padding:7px 12px;
+    font-size:11px;
+}
+
+/* DIAGRAM
+   Size is set generously (about 2x a "just fits the content" size)
+   so entities/attributes/relationships have room to breathe and
+   dragging rarely causes overlap. The area scrolls both ways so
+   nothing gets clipped on smaller screens. */
 .diagram-area{
     height:470px;
     border:1px solid var(--border);
@@ -161,30 +176,40 @@ button{font-family:inherit}
 
 .er-canvas{
     position:relative;
-    min-width:100%;
-    width:max-content;
-    min-height:450px;
+    width:100%;
+    min-width:1800px;
+    min-height:1300px;
+    display:block;
+    padding:0;
+}
+
+.relationship-svg{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
     height:100%;
-    display:flex;
-    flex-wrap:nowrap;
-    align-content:safe center;
-    align-items:center;
-    justify-content:safe center;
-    gap:220px;
-    padding:150px 200px;
+    min-width:1800px;
+    min-height:1300px;
+    overflow:visible;
+    pointer-events:none;
+    z-index:1;
 }
 
 /* ENTITY */
 .er-entity-wrapper{
-    position:relative;
-    flex:0 0 auto;
+    position:absolute;
     width:190px;
-    min-height:160px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    height:150px;
+    z-index:5;
+    touch-action:none;
+}
+.er-entity-wrapper.dragging{
+    cursor:grabbing;
+    z-index:50;
 }
 .er-entity{
+    position:relative;
     width:175px;
     min-height:65px;
     border:3px solid var(--accent);
@@ -197,6 +222,7 @@ button{font-family:inherit}
     text-transform:uppercase;
     z-index:5;
     box-shadow:0 10px 30px rgba(0,0,0,.25);
+    margin:0 auto;
 }
 
 /* ATTRIBUTES */
@@ -207,7 +233,11 @@ button{font-family:inherit}
     display:flex;
     justify-content:center;
     align-items:center;
-    z-index:3;
+    z-index:4;
+    touch-action:none;
+}
+.er-attribute-wrapper.dragging{
+    z-index:51;
 }
 .er-attribute{
     width:135px;
@@ -222,6 +252,7 @@ button{font-family:inherit}
     text-align:center;
     font-size:11px;
     z-index:5;
+    position:relative;
 }
 .attribute-name{font-weight:600}
 .attribute-type{
@@ -246,26 +277,26 @@ button{font-family:inherit}
     border-radius:5px;
 }
 
-/* ATTRIBUTE POSITIONS */
-.attribute-top{top:-82px;left:22px}
+/* ATTRIBUTE POSITIONS (default, before drag) */
+.attribute-top{top:-140px;left:22px}
 .attribute-top .er-line{
-    width:2px;height:82px;
-    left:71px;top:50px;
+    width:2px;height:140px;
+    left:71px;top:65px;
 }
-.attribute-right{right:-145px;top:47px}
+.attribute-right{right:-260px;top:47px}
 .attribute-right .er-line{
-    width:145px;height:2px;
-    right:100px;top:31px;
+    width:260px;height:2px;
+    right:145px;top:31px;
 }
-.attribute-bottom{bottom:-82px;left:22px}
+.attribute-bottom{bottom:-140px;left:22px}
 .attribute-bottom .er-line{
-    width:2px;height:82px;
-    left:71px;bottom:50px;
+    width:2px;height:140px;
+    left:71px;bottom:65px;
 }
-.attribute-left{left:-145px;top:47px}
+.attribute-left{left:-260px;top:47px}
 .attribute-left .er-line{
-    width:145px;height:2px;
-    left:100px;top:31px;
+    width:260px;height:2px;
+    left:145px;top:31px;
 }
 .er-line{
     position:absolute;
@@ -273,50 +304,33 @@ button{font-family:inherit}
     z-index:1;
 }
 
-/* RELATIONSHIPS */
-.er-conn-line{
-    position:absolute;
-    height:2px;
-    background:var(--success);
-    transform-origin:0 50%;
-    z-index:2;
-    pointer-events:none;
-}
-.er-relationship{
-    position:absolute;
-    z-index:10;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    pointer-events:none;
+/* RELATIONSHIPS (SVG-drawn, see relationship-svg above) */
+.relationship-line{
+    stroke:#8c99af;
+    stroke-width:2;
+    fill:none;
 }
 .relationship-diamond{
-    width:100px;
-    height:100px;
-    background:var(--panel);
-    border:3px solid var(--success);
-    transform:rotate(45deg);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    fill:var(--panel);
+    stroke:var(--success);
+    stroke-width:2;
+    pointer-events:auto;
+    cursor:grab;
 }
+.relationship-diamond:active{cursor:grabbing}
 .relationship-name{
-    transform:rotate(-45deg);
-    color:var(--text);
+    fill:var(--text);
     font-size:11px;
     font-weight:700;
-    text-align:center;
-    max-width:75px;
+    pointer-events:auto;
+    cursor:grab;
 }
-.cardinality{
-    position:absolute;
-    font-size:12px;
+.cardinality-label{
+    fill:var(--text);
+    font-size:13px;
     font-weight:800;
-    color:var(--success);
+    pointer-events:none;
 }
-.cardinality.left{left:-35px}
-.cardinality.right{right:-35px}
 
 /* LEGEND */
 .notation-legend{
@@ -528,108 +542,3 @@ body.light #sqlOutput{background:#f3f5f9}
     .status{display:none}
     .diagram-area{height:450px}
 }
-/* =========================================
-   RELATIONSHIP DIAGRAM FIX
-========================================= */
-
-.er-canvas {
-    position: relative;
-    width: 100%;
-    min-width: 900px;
-    min-height: 650px;
-    display: block;
-    padding: 0;
-}
-
-.relationship-svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    min-width: 900px;
-    min-height: 650px;
-    overflow: visible;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.er-entity-wrapper {
-    position: absolute;
-    width: 190px;
-    height: 150px;
-    z-index: 5;
-}
-
-.er-entity-wrapper.dragging {
-    cursor: grabbing;
-}
-
-.er-entity {
-    position: relative;
-    z-index: 5;
-}
-
-/* Relationship line */
-
-.relationship-line {
-    stroke: #8c99af;
-    stroke-width: 2;
-    fill: none;
-}
-
-/* Relationship diamond */
-
-.relationship-diamond {
-    fill: var(--panel);
-    stroke: var(--success);
-    stroke-width: 2;
-    pointer-events: auto;
-    cursor: grab;
-}
-
-.relationship-diamond:active {
-    cursor: grabbing;
-}
-
-/* Relationship name */
-
-.relationship-name {
-    fill: var(--text);
-    font-size: 11px;
-    font-weight: 700;
-    pointer-events: auto;
-    cursor: grab;
-}
-
-/* Cardinality */
-
-.cardinality-label {
-    fill: var(--text);
-    font-size: 13px;
-    font-weight: 800;
-    pointer-events: none;
-}
-
-/* Keep attributes above relationship lines */
-
-.er-attribute-wrapper {
-    z-index: 4;
-}
-
-.er-attribute {
-    z-index: 5;
-}
-
-.er-line {
-    z-index: 2;
-}
-
-/* Make diagram scroll instead of overlapping */
-
-.diagram-area {
-    overflow: auto;
-    position: relative;
-    min-height: 500px;
-}
-
