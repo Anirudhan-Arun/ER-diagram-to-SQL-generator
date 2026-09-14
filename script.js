@@ -1184,12 +1184,15 @@ function addColumnDefinition(lines, name, type, extra = "") {
     lines.push(`    ${sanitizeSQLName(name)} ${sqlType(type)}${extra}`);
 }
 
+/* =========================================================
+   GENERATE SQL
+========================================================= */
+
 generateBtn.addEventListener("click", () => {
     if (!entities.length)
         return showValidation("error", "Add an entity before generating SQL.");
 
     let sql = "";
-
     const relationshipForeignKeys = {};
 
     relationships.forEach(relationship => {
@@ -1231,34 +1234,50 @@ generateBtn.addEventListener("click", () => {
         const foreignKeys = relationshipForeignKeys[entity.name] || [];
 
         foreignKeys.forEach(fk => {
-            const unique = fk.relationship.type === "1:1" ? " UNIQUE" : "";
+            const referencedPK = fk.target.attributes.find(
+                a => a.name === fk.targetColumn
+            );
+
+            const fkType = referencedPK
+                ? referencedPK.type
+                : "INTEGER";
+
+            const unique = fk.relationship.type === "1:1"
+                ? " UNIQUE"
+                : "";
 
             addColumnDefinition(
                 lines,
                 fk.column,
-                fk.targetType,
-                `${unique} REFERENCES ${sanitizeSQLName(fk.target.name)}(${sanitizeSQLName(fk.targetColumn)})`
+                fkType,
+                unique
             );
+
+            if (
+                fk.relationship.attributes &&
+                fk.relationship.attributes.length
+            ) {
+                fk.relationship.attributes.forEach(attribute => {
+                    addColumnDefinition(
+                        lines,
+                        attribute.name,
+                        attribute.type
+                    );
+                });
+            }
         });
 
         foreignKeys.forEach(fk => {
-            if (!fk.relationship.attributes || !fk.relationship.attributes.length)
-                return;
-
-            fk.relationship.attributes.forEach(attribute => {
-                addColumnDefinition(
-                    lines,
-                    attribute.name,
-                    attribute.type
-                );
-            });
+            lines.push(
+                `    FOREIGN KEY (${sanitizeSQLName(fk.column)}) REFERENCES ${sanitizeSQLName(fk.target.name)}(${sanitizeSQLName(fk.targetColumn)})`
+            );
         });
-
-        const tableName = sanitizeSQLName(entity.name);
 
         const formattedLines = lines.map((line, index) => {
             return index < lines.length - 1 ? line + "," : line;
         });
+
+        const tableName = sanitizeSQLName(entity.name);
 
         sql += `CREATE TABLE ${tableName} (\n`;
         sql += formattedLines.join("\n");
@@ -1292,10 +1311,18 @@ generateBtn.addEventListener("click", () => {
 
         const lines = [];
 
-        lines.push(`    ${fromColumn} ${sqlType(fromPK.type)}`);
-        lines.push(`    ${toColumn} ${sqlType(toPK.type)}`);
+        lines.push(
+            `    ${fromColumn} ${sqlType(fromPK.type)}`
+        );
 
-        if (relationship.attributes) {
+        lines.push(
+            `    ${toColumn} ${sqlType(toPK.type)}`
+        );
+
+        if (
+            relationship.attributes &&
+            relationship.attributes.length
+        ) {
             relationship.attributes.forEach(attribute => {
                 lines.push(
                     `    ${sanitizeSQLName(attribute.name)} ${sqlType(attribute.type)}`
@@ -1303,7 +1330,9 @@ generateBtn.addEventListener("click", () => {
             });
         }
 
-        lines.push(`    PRIMARY KEY (${fromColumn}, ${toColumn})`);
+        lines.push(
+            `    PRIMARY KEY (${fromColumn}, ${toColumn})`
+        );
 
         lines.push(
             `    FOREIGN KEY (${fromColumn}) REFERENCES ${sanitizeSQLName(from.name)}(${sanitizeSQLName(fromPK.name)})`
