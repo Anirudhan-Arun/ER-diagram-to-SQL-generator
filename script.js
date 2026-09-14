@@ -118,8 +118,12 @@ addEntityBtn.addEventListener("click", () => {
         name: x,
         type: inferDataType(x),
         primaryKey: detectPrimaryKey(x),
-        lineOffsetX: 0, // manual bend applied to this attribute's connecting line
-        lineOffsetY: 0
+        startOffsetX: 0, // manual drag of the line's end that sits on the entity
+        startOffsetY: 0,
+        lineOffsetX: 0,  // manual bend in the middle of the line
+        lineOffsetY: 0,
+        endOffsetX: 0,   // manual drag of the line's end that sits on the attribute
+        endOffsetY: 0
     }));
 
     if (!attributes.some(a => a.primaryKey))
@@ -241,10 +245,20 @@ if (addRelBtn) {
             type,
             x: null, // absolute canvas position of the diamond center; null = "not yet placed"
             y: null,
-            fromOffsetX: 0, // manual bend applied to the "from entity -> diamond" line
+            // "from" segment: fromEntity <-> diamond
+            fromSegStartOffsetX: 0, // manual drag of the end that sits on the "from" entity
+            fromSegStartOffsetY: 0,
+            fromOffsetX: 0,         // manual bend in the middle
             fromOffsetY: 0,
-            toOffsetX: 0,   // manual bend applied to the "diamond -> to entity" line
-            toOffsetY: 0
+            fromSegEndOffsetX: 0,   // manual drag of the end that sits on the diamond
+            fromSegEndOffsetY: 0,
+            // "to" segment: diamond <-> toEntity
+            toSegStartOffsetX: 0,   // manual drag of the end that sits on the diamond
+            toSegStartOffsetY: 0,
+            toOffsetX: 0,           // manual bend in the middle
+            toOffsetY: 0,
+            toSegEndOffsetX: 0,     // manual drag of the end that sits on the "to" entity
+            toSegEndOffsetY: 0
         });
 
         if (relName) relName.value = "";
@@ -304,6 +318,10 @@ function deleteRelationship(index) {
    connecting lines can be redrawn live.
 ========================================================= */
 
+// Updated every render; used to keep dragged shapes inside the scrollable area.
+let currentCanvasWidth = 0;
+let currentCanvasHeight = 0;
+
 function makeDraggable(element, onMove) {
     let dragging = false;
     let startClientX = 0;
@@ -337,8 +355,14 @@ function makeDraggable(element, onMove) {
         const dx = e.clientX - startClientX;
         const dy = e.clientY - startClientY;
 
-        const newLeft = originLeft + dx;
-        const newTop = originTop + dy;
+        // Clamp to the canvas so a shape can never be dragged somewhere the
+        // scroll area can't reach (which is what made shapes "disappear
+        // forever" before).
+        const maxLeft = Math.max(0, currentCanvasWidth - element.offsetWidth);
+        const maxTop = Math.max(0, currentCanvasHeight - element.offsetHeight);
+
+        const newLeft = Math.min(maxLeft, Math.max(0, originLeft + dx));
+        const newTop = Math.min(maxTop, Math.max(0, originTop + dy));
 
         element.style.left = `${newLeft}px`;
         element.style.top = `${newTop}px`;
@@ -436,12 +460,25 @@ function renderDiagram() {
     const COLUMNS = Math.min(3, entities.length) || 1;
     const COL_SPACING = 620;
     const ROW_SPACING = 520;
-    const START_X = 160;
-    const START_Y = 160;
     const rows = Math.ceil(entities.length / COLUMNS);
 
-    const canvasWidth = Math.max(1800, START_X * 2 + COLUMNS * COL_SPACING);
-    const canvasHeight = Math.max(1300, START_Y * 2 + rows * ROW_SPACING);
+    // The diagram's natural footprint (entities + room for attributes and
+    // relationship diamonds spreading out around them).
+    const naturalContentWidth = COLUMNS * COL_SPACING + 900;
+    const naturalContentHeight = rows * ROW_SPACING + 900;
+
+    // The canvas itself is always 4x that footprint, so there is always at
+    // least 1.5x the diagram's own size worth of empty space to drag into on
+    // every side, no matter how the diagram is arranged.
+    const canvasWidth = naturalContentWidth * 4;
+    const canvasHeight = naturalContentHeight * 4;
+
+    // Center the default grid inside the much larger canvas.
+    const START_X = (canvasWidth - COLUMNS * COL_SPACING) / 2;
+    const START_Y = (canvasHeight - rows * ROW_SPACING) / 2;
+
+    currentCanvasWidth = canvasWidth;
+    currentCanvasHeight = canvasHeight;
 
     canvas.style.minWidth = canvasWidth + "px";
     canvas.style.minHeight = canvasHeight + "px";
@@ -590,8 +627,13 @@ function renderDiagram() {
 
     diagramArea.appendChild(canvas);
 
-    // Initial line draw, after layout has settled so offsetWidth/Height are accurate.
-    requestAnimationFrame(() => redrawConnections());
+    // Center the visible scroll area on the diagram content, since the
+    // canvas is now 4x bigger than the content itself.
+    requestAnimationFrame(() => {
+        diagramArea.scrollLeft = (canvasWidth - diagramArea.clientWidth) / 2;
+        diagramArea.scrollTop = (canvasHeight - diagramArea.clientHeight) / 2;
+        redrawConnections();
+    });
 }
 
 /* =========================================================
@@ -661,46 +703,79 @@ function quadraticPoint(p0, p1, p2, t) {
     };
 }
 
-// Draws a draggable curved connector from `start` to `end`. `offset` is the
-// object holding the persisted bend (e.g. an attribute or a relationship),
-// `offsetXKey`/`offsetYKey` name the fields on it to read/write.
-function drawDraggableConnector(start, end, offsetHolder, offsetXKey, offsetYKey) {
-    const midX = (start.x + end.x) / 2;
-    const midY = (start.y + end.y) / 2;
+// Draws one small draggable circular handle at (x,y). onDrag receives the
+// raw pixel delta of the drag; endpoint handles are drawn solid (they mark
+// where the line attaches), the bend handle is drawn hollow (it only curves
+// the path in between).
+function drawHandle(x, y, onDrag, variant) {
+    const handle = createSVGEl("circle");
+    handle.setAttribute("cx", x);
+    handle.setAttribute("cy", y);
+    handle.setAttribute("r", variant === "endpoint" ? "7" : "6");
+    handle.setAttribute("fill", variant === "endpoint" ? "#6c8cff" : (isLight() ? "#ffffff" : "#11182b"));
+    handle.setAttribute("stroke", "#6c8cff");
+    handle.setAttribute("stroke-width", "2");
+    svgLayer.appendChild(handle);
+    makeSvgHandleDraggable(handle, onDrag);
+}
+
+// Draws a connector between two shapes with THREE draggable points:
+//   - a handle at the start (drag it to move where the line touches shape A)
+//   - a handle in the middle (drag it to bend the path)
+//   - a handle at the end (drag it to move where the line touches shape B)
+// `anchorStart`/`anchorEnd` are the auto-computed default touch points on
+// each shape's boundary. `holder` is the attribute or relationship object
+// that persists the offsets; `keys` names the six offset fields on it:
+// { sx, sy, bx, by, ex, ey } for start/bend/end x/y.
+// Returns the actual {start,end} points used, for label placement.
+function drawDraggableConnector(anchorStart, anchorEnd, holder, keys) {
+    const actualStart = {
+        x: anchorStart.x + (holder[keys.sx] || 0),
+        y: anchorStart.y + (holder[keys.sy] || 0)
+    };
+    const actualEnd = {
+        x: anchorEnd.x + (holder[keys.ex] || 0),
+        y: anchorEnd.y + (holder[keys.ey] || 0)
+    };
+
+    const midX = (actualStart.x + actualEnd.x) / 2;
+    const midY = (actualStart.y + actualEnd.y) / 2;
 
     const control = {
-        x: midX + (offsetHolder[offsetXKey] || 0),
-        y: midY + (offsetHolder[offsetYKey] || 0)
+        x: midX + (holder[keys.bx] || 0),
+        y: midY + (holder[keys.by] || 0)
     };
 
     const path = createSVGEl("path");
-    path.setAttribute(
-        "d",
-        `M ${start.x},${start.y} Q ${control.x},${control.y} ${end.x},${end.y}`
-    );
+    path.setAttribute("d", `M ${actualStart.x},${actualStart.y} Q ${control.x},${control.y} ${actualEnd.x},${actualEnd.y}`);
     path.setAttribute("stroke", "#8c99af");
     path.setAttribute("stroke-width", "2");
     path.setAttribute("fill", "none");
     svgLayer.appendChild(path);
 
-    // Small draggable handle sitting on the curve's control point. Endpoints
-    // stay locked to the shapes; this only lets the user bend the path
-    // between them, so the line always still visibly connects both shapes.
-    const handle = createSVGEl("circle");
-    const handlePos = quadraticPoint(start, control, end, 0.5);
-    handle.setAttribute("cx", handlePos.x);
-    handle.setAttribute("cy", handlePos.y);
-    handle.setAttribute("r", "6");
-    handle.setAttribute("fill", isLight() ? "#ffffff" : "#11182b");
-    handle.setAttribute("stroke", "#6c8cff");
-    handle.setAttribute("stroke-width", "2");
-    svgLayer.appendChild(handle);
-
-    makeSvgHandleDraggable(handle, (dx, dy) => {
-        offsetHolder[offsetXKey] = (offsetHolder[offsetXKey] || 0) + dx;
-        offsetHolder[offsetYKey] = (offsetHolder[offsetYKey] || 0) + dy;
+    // Start handle — reattach this end anywhere.
+    drawHandle(actualStart.x, actualStart.y, (dx, dy) => {
+        holder[keys.sx] = (holder[keys.sx] || 0) + dx;
+        holder[keys.sy] = (holder[keys.sy] || 0) + dy;
         redrawConnections();
-    });
+    }, "endpoint");
+
+    // Bend handle — curve the middle of the path.
+    const bendPos = quadraticPoint(actualStart, control, actualEnd, 0.5);
+    drawHandle(bendPos.x, bendPos.y, (dx, dy) => {
+        holder[keys.bx] = (holder[keys.bx] || 0) + dx;
+        holder[keys.by] = (holder[keys.by] || 0) + dy;
+        redrawConnections();
+    }, "bend");
+
+    // End handle — reattach this end anywhere.
+    drawHandle(actualEnd.x, actualEnd.y, (dx, dy) => {
+        holder[keys.ex] = (holder[keys.ex] || 0) + dx;
+        holder[keys.ey] = (holder[keys.ey] || 0) + dy;
+        redrawConnections();
+    }, "endpoint");
+
+    return { start: actualStart, end: actualEnd };
 }
 
 function redrawConnections() {
@@ -722,7 +797,11 @@ function redrawConnections() {
         const start = rectEdgePoint(entityC.x, entityC.y, entityC.halfW, entityC.halfH, dx, dy);
         const end = ellipseEdgePoint(attrC.x, attrC.y, attrC.halfW, attrC.halfH, -dx, -dy);
 
-        drawDraggableConnector(start, end, attribute, "lineOffsetX", "lineOffsetY");
+        drawDraggableConnector(start, end, attribute, {
+            sx: "startOffsetX", sy: "startOffsetY",
+            bx: "lineOffsetX", by: "lineOffsetY",
+            ex: "endOffsetX", ey: "endOffsetY"
+        });
     });
 
     // Entity <-> diamond <-> entity lines + cardinality labels
@@ -745,13 +824,21 @@ function redrawConnections() {
         const startTo = rectEdgePoint(toC.x, toC.y, toC.halfW, toC.halfH, dxTo, dyTo);
         const endTo = diamondEdgePoint(diamondC.x, diamondC.y, diamondC.halfW, diamondC.halfH, -dxTo, -dyTo);
 
-        drawDraggableConnector(startFrom, endFrom, relationship, "fromOffsetX", "fromOffsetY");
-        drawDraggableConnector(startTo, endTo, relationship, "toOffsetX", "toOffsetY");
+        const segFrom = drawDraggableConnector(startFrom, endFrom, relationship, {
+            sx: "fromSegStartOffsetX", sy: "fromSegStartOffsetY",
+            bx: "fromOffsetX", by: "fromOffsetY",
+            ex: "fromSegEndOffsetX", ey: "fromSegEndOffsetY"
+        });
+        const segTo = drawDraggableConnector(startTo, endTo, relationship, {
+            sx: "toSegStartOffsetX", sy: "toSegStartOffsetY",
+            bx: "toOffsetX", by: "toOffsetY",
+            ex: "toSegEndOffsetX", ey: "toSegEndOffsetY"
+        });
 
         const cardinalities = getCardinalities(relationship.type);
 
-        const fromLabelPos = pointAlong(startFrom, endFrom, 0.3, 14);
-        const toLabelPos = pointAlong(startTo, endTo, 0.3, 14);
+        const fromLabelPos = pointAlong(segFrom.start, segFrom.end, 0.3, 14);
+        const toLabelPos = pointAlong(segTo.start, segTo.end, 0.3, 14);
 
         [[fromLabelPos, cardinalities.from], [toLabelPos, cardinalities.to]].forEach(([pos, text]) => {
             if (!text) return;
@@ -795,18 +882,30 @@ function resetLayout() {
         e.attributes.forEach(a => {
             a.x = null;
             a.y = null;
+            a.startOffsetX = 0;
+            a.startOffsetY = 0;
             a.lineOffsetX = 0;
             a.lineOffsetY = 0;
+            a.endOffsetX = 0;
+            a.endOffsetY = 0;
         });
     });
 
     relationships.forEach(r => {
         r.x = null;
         r.y = null;
+        r.fromSegStartOffsetX = 0;
+        r.fromSegStartOffsetY = 0;
         r.fromOffsetX = 0;
         r.fromOffsetY = 0;
+        r.fromSegEndOffsetX = 0;
+        r.fromSegEndOffsetY = 0;
+        r.toSegStartOffsetX = 0;
+        r.toSegStartOffsetY = 0;
         r.toOffsetX = 0;
         r.toOffsetY = 0;
+        r.toSegEndOffsetX = 0;
+        r.toSegEndOffsetY = 0;
     });
 
     renderDiagram();
