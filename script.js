@@ -492,6 +492,13 @@ function renderDiagram() {
     svgLayer.style.height = canvasHeight + "px";
     svgLayer.style.pointerEvents = "none";
     svgLayer.style.overflow = "visible";
+    // Sits ABOVE entities (5), attributes (4), and diamonds (6) in stacking
+    // order. Combined with pointer-events:none on the layer itself and
+    // pointer-events:all only on individual handle circles, this guarantees
+    // a click precisely on a handle always hits the handle — never the
+    // shape underneath it — while clicks anywhere else pass straight
+    // through to the shape below as normal.
+    svgLayer.style.zIndex = "50";
     canvas.appendChild(svgLayer);
 
     // --- ENTITIES ---
@@ -711,7 +718,7 @@ function drawHandle(x, y, onDrag, variant) {
     const handle = createSVGEl("circle");
     handle.setAttribute("cx", x);
     handle.setAttribute("cy", y);
-    handle.setAttribute("r", variant === "endpoint" ? "7" : "6");
+    handle.setAttribute("r", variant === "endpoint" ? "9" : "6");
     handle.setAttribute("fill", variant === "endpoint" ? "#6c8cff" : (isLight() ? "#ffffff" : "#11182b"));
     handle.setAttribute("stroke", "#6c8cff");
     handle.setAttribute("stroke-width", "2");
