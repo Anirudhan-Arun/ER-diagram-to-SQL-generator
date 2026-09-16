@@ -11,15 +11,27 @@
 
 <header class="topbar">
  <div class="logo"><span>ER</span> → SQL Generator</div>
+
+ <nav class="main-nav" aria-label="Main navigation">
+  <button class="nav-btn active" data-view="dashboardView">Dashboard</button>
+  <button class="nav-btn" data-view="learnView">Learn</button>
+  <button class="nav-btn" data-view="developedByView">Developed By</button>
+  <button class="nav-btn" data-view="helpView">Help</button>
+ </nav>
+
  <div class="header-right">
   <span class="status">● Review 1 Prototype</span>
+  <button id="downloadBtn" class="secondary-btn small-btn">⬇ Download</button>
   <button id="themeBtn" class="theme-btn">☾</button>
  </div>
 </header>
 
+<div id="dashboardView" class="view active-view">
+
 <main class="dashboard">
 
 <section class="panel input-panel">
+
  <div class="panel-title">
   <h2>ER Diagram Input</h2>
   <p>Define entities, attributes and relationships.</p>
@@ -79,6 +91,7 @@
  </div>
 
  <button id="generateBtn" class="generate-btn">Generate SQL →</button>
+
 </section>
 
 <section class="panel visualization-panel">
@@ -88,11 +101,23 @@
    <h2>ER Diagram</h2>
    <p>Standard ER notation visualization.</p>
   </div>
+
   <span id="stepBadge" class="step-badge">Step 1</span>
  </div>
 
  <div class="diagram-toolbar">
-  <button id="resetLayoutBtn" class="secondary-btn small-btn">⟲ Reset Layout</button>
+
+  <div class="zoom-controls">
+   <button id="zoomOutBtn" class="secondary-btn small-btn">−</button>
+   <span id="zoomLevel">100%</span>
+   <button id="zoomInBtn" class="secondary-btn small-btn">+</button>
+   <button id="zoomResetBtn" class="secondary-btn small-btn">Reset Zoom</button>
+  </div>
+
+  <button id="resetLayoutBtn" class="secondary-btn small-btn">
+   ⟲ Reset Layout
+  </button>
+
  </div>
 
  <div id="diagramArea" class="diagram-area">
@@ -110,11 +135,21 @@
  </div>
 
  <div class="conversion-flow">
-  <div id="flowEntities" class="flow-step"><span>1</span>Entities</div>
+  <div id="flowEntities" class="flow-step">
+   <span>1</span>Entities
+  </div>
+
   <div class="flow-arrow">→</div>
-  <div id="flowRelations" class="flow-step"><span>2</span>Relations</div>
+
+  <div id="flowRelations" class="flow-step">
+   <span>2</span>Relations
+  </div>
+
   <div class="flow-arrow">→</div>
-  <div id="flowSql" class="flow-step"><span>3</span>SQL</div>
+
+  <div id="flowSql" class="flow-step">
+   <span>3</span>SQL
+  </div>
  </div>
 
 </section>
@@ -154,29 +189,332 @@
   <p>Add an entity to begin.</p>
  </div>
 
- <div class="future-feature">
- </div>
+ <div class="future-feature"></div>
 
 </section>
 
 </main>
 
 <section class="sql-section">
+
  <div class="sql-header">
   <div>
    <h2>Generated SQL</h2>
    <p>SQL statements generated from your ER model.</p>
   </div>
+
   <button id="copyBtn" class="secondary-btn">Copy SQL</button>
  </div>
 
  <pre id="sqlOutput"><code>-- Generated SQL will appear here.</code></pre>
+
 </section>
+
+</div>
+
+<div id="learnView" class="view">
+
+<section class="panel info-page">
+
+ <div class="panel-title">
+  <div>
+   <h2>Learn</h2>
+   <p>Learn how an Entity-Relationship model can be converted into SQL.</p>
+  </div>
+ </div>
+
+ <div class="learn-block">
+
+  <h3>1. Concept Explanation</h3>
+
+  <div class="content-card">
+
+   <h4>Entity-Relationship Model to SQL</h4>
+
+   <p>
+    An Entity-Relationship (ER) model is used to represent the structure
+    of a database using entities, attributes and relationships.
+    The ER model can then be converted into a relational schema,
+    where entities become tables, attributes become columns,
+    and relationships are represented using foreign keys or
+    separate relationship tables depending on their cardinality.
+   </p>
+
+   <p>
+    This website demonstrates this conversion interactively.
+    Users define entities and attributes, specify relationships
+    and cardinalities, visualize the ER model, and generate SQL
+    CREATE TABLE statements.
+   </p>
+
+   <h4>Basic Conversion Rules</h4>
+
+   <ul>
+    <li>Each entity is converted into a relational table.</li>
+    <li>Entity attributes become table columns.</li>
+    <li>A primary-key attribute identifies records in a table.</li>
+    <li>One-to-many relationships are represented using foreign keys.</li>
+    <li>Many-to-many relationships require a separate junction table.</li>
+   </ul>
+
+  </div>
+
+ </div>
+
+ <div class="learn-block">
+
+  <h3>2. Animated / Educational Video</h3>
+
+  <div id="videoEmbed" class="video-placeholder">
+
+   <div class="video-icon">▶</div>
+
+   <h4>Video will be added here</h4>
+
+   <p>
+    Replace this placeholder with your selected educational
+    YouTube video after you choose your reference video.
+   </p>
+
+  </div>
+
+ </div>
+
+ <div class="learn-block">
+
+  <h3>3. References</h3>
+
+  <div class="content-card">
+
+   <p>
+    References used for the learning material will be listed here.
+   </p>
+
+   <ul id="referencesList">
+    <li>Reference 1 — To be added</li>
+    <li>Reference 2 — To be added</li>
+    <li>Research paper / educational website — To be added</li>
+    <li>Video source — To be added</li>
+   </ul>
+
+  </div>
+
+ </div>
+
+</section>
+
+</div>
+
+<div id="developedByView" class="view">
+
+<section class="panel info-page">
+
+ <div class="panel-title">
+
+  <div>
+   <h2>Developed By</h2>
+   <p>Project and student information.</p>
+  </div>
+
+ </div>
+
+ <div class="team-grid">
+
+  <div class="team-card">
+
+   <div class="team-photo">
+    📷
+   </div>
+
+   <h3>[Your Name]</h3>
+
+   <p>
+    Register Number:
+    <strong>[Your Register Number]</strong>
+   </p>
+
+  </div>
+
+ </div>
+
+ <div class="guided-by-box">
+
+  <h3>Guided By</h3>
+
+  <p><strong>Dr. Swaminathan A</strong></p>
+
+  <p>Assistant Professor</p>
+
+ </div>
+
+</section>
+
+</div>
+
+<div id="helpView" class="view">
+
+<section class="panel info-page">
+
+ <div class="panel-title">
+
+  <div>
+   <h2>Help</h2>
+   <p>Step-by-step guide to using the ER → SQL Generator.</p>
+  </div>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>What does this website do?</h3>
+
+  <p>
+   This application allows users to create an Entity-Relationship
+   model by entering entities, attributes and relationships.
+   It visualizes the ER diagram and generates SQL CREATE TABLE
+   statements from the model.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Step 1 — Add an Entity</h3>
+
+  <p>
+   Enter the name of the entity, such as Student.
+   Then enter its attributes separated by commas.
+  </p>
+
+  <p class="example">
+   Example: student_id, name, email, dob
+  </p>
+
+  <p>
+   Click <strong>+ Add Entity</strong>.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Step 2 — Add Relationships</h3>
+
+  <p>
+   Select the first entity, enter the relationship name,
+   select the second entity and choose the appropriate cardinality.
+  </p>
+
+  <p>
+   Supported cardinalities are:
+   <strong>1:1, 1:N, N:1 and M:N.</strong>
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Step 3 — Add Relationship Attributes</h3>
+
+  <p>
+   If the relationship itself has attributes, enter them in the
+   Relationship Attributes field separated by commas.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Step 4 — Review the ER Diagram</h3>
+
+  <p>
+   The diagram represents entities using rectangles,
+   attributes using ovals and relationships using diamonds.
+   Diagram elements can be moved using drag and drop.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Step 5 — Zoom the Diagram</h3>
+
+  <p>
+   Use the <strong>+</strong> button to zoom in and the
+   <strong>−</strong> button to zoom out.
+   Use <strong>Reset Zoom</strong> to return to 100%.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Step 6 — Generate SQL</h3>
+
+  <p>
+   Click <strong>Generate SQL →</strong>.
+   The application converts the ER model into SQL
+   CREATE TABLE statements.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Step 7 — Review the Output</h3>
+
+  <p>
+   The generated SQL is displayed in the Generated SQL section.
+   You can use <strong>Copy SQL</strong> to copy the generated code.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Validation</h3>
+
+  <p>
+   The Validation section displays messages when an input is
+   missing or invalid and confirms successful operations.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Download</h3>
+
+  <p>
+   Use the Download button in the top navigation to generate
+   a report containing the entered model, processing information,
+   intermediate information and generated SQL.
+  </p>
+
+ </div>
+
+ <div class="help-section">
+
+  <h3>Day / Night Mode</h3>
+
+  <p>
+   Use the button in the top-right corner to switch between
+   Day Mode and Night Mode.
+  </p>
+
+ </div>
+
+</section>
+
+</div>
 
 <footer>
  <p>ER → SQL Generator · DBMS Module 1 · Interactive Learning Tool</p>
 </footer>
 
 <script src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="extra.js"></script>
+
 </body>
 </html>
