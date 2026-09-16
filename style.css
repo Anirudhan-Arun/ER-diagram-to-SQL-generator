@@ -1489,3 +1489,126 @@ body.light footer{
     padding-top:18px;
     border-top:1px solid var(--border);
 }
+/* =========================================================
+   DRAW.IO IMPORT
+========================================================= */
+
+.drawio-import-section {
+    margin-top: 24px;
+    margin-bottom: 28px;
+}
+
+.drawio-upload-box {
+    border: 2px dashed var(--border-color, #cbd5e1);
+    border-radius: 14px;
+    padding: 22px;
+    text-align: center;
+    background: var(--panel-secondary, rgba(148, 163, 184, 0.06));
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.drawio-upload-box:hover {
+    border-color: #64748b;
+}
+
+.drawio-file-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 8px;
+    background: var(--button-secondary, #e2e8f0);
+    color: var(--text-primary, #0f172a);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.drawio-file-label:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.drawio-file-name {
+    margin: 12px 0;
+    min-height: 20px;
+    color: var(--text-secondary, #64748b);
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
+.drawio-upload-box small {
+    display: block;
+    margin-top: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary, #64748b);
+}
+
+#drawioFile {
+    display: none;
+}
+
+#importDrawioBtn {
+    margin-top: 4px;
+}
+
+#importDrawioBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+
+/* =========================================================
+   DRAW.IO IMPORT — DARK MODE
+========================================================= */
+
+body.dark-mode .drawio-upload-box,
+body.dark .drawio-upload-box {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .drawio-upload-box:hover,
+body.dark .drawio-upload-box:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .drawio-file-label,
+body.dark .drawio-file-label {
+    background: rgba(255, 255, 255, 0.1);
+    color: inherit;
+}
+
+
+/* =========================================================
+   IMPORT / BUILD SEPARATION
+========================================================= */
+
+.drawio-import-section + .build-own-heading {
+    margin-top: 30px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+
+/* =========================================================
+   RESPONSIVE DRAW.IO BOX
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .drawio-upload-box {
+        padding: 18px 14px;
+    }
+
+    .drawio-file-label {
+        width: 100%;
+    }
+
+    #importDrawioBtn {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+}
