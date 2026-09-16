@@ -1397,3 +1397,14 @@ updateRelationshipSelectors();
 renderEntities();
 renderRelationshipList();
 updateProgress();
+/* =========================================================
+   EXTRA PROJECT DATA ACCESS
+   ========================================================= */
+
+window.getERGeneratorData = function () {
+    return {
+        entities: JSON.parse(JSON.stringify(entities)),
+        relationships: JSON.parse(JSON.stringify(relationships)),
+        sqlGenerated: sqlGenerated
+    };
+};
