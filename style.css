@@ -1437,3 +1437,55 @@ body.light .small-btn{
 body.light footer{
     color:#536176;
 }
+/* =========================================================
+   BUILT-IN EXAMPLES
+   ========================================================= */
+
+.examples-section{
+    margin-bottom:24px;
+    padding:18px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:rgba(56,211,159,.04);
+}
+
+.examples-heading h3,
+.build-own-heading h3{
+    margin:0 0 5px;
+}
+
+.examples-heading p,
+.build-own-heading p{
+    margin:0 0 14px;
+    color:var(--muted);
+    font-size:13px;
+}
+
+.example-select{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--panel);
+    color:var(--text);
+    font:inherit;
+    cursor:pointer;
+}
+
+.example-select:focus{
+    outline:none;
+    border-color:var(--accent);
+}
+
+.example-help{
+    display:block;
+    margin-top:9px;
+    color:var(--muted);
+    line-height:1.5;
+}
+
+.build-own-heading{
+    margin:8px 0 18px;
+    padding-top:18px;
+    border-top:1px solid var(--border);
+}
