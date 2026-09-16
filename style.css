@@ -772,8 +772,8 @@ body.light #sqlOutput{background:#f3f5f9}
 }
 
 .team-photo{
-    width:100px;
-    height:100px;
+    width:50px;
+    height:40px;
     margin:0 auto 14px;
     display:flex;
     align-items:center;
