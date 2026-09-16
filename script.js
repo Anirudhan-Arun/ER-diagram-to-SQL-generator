@@ -1413,3 +1413,525 @@ window.getERGeneratorData = function () {
         sqlGenerated: sqlGenerated
     };
 };
+/* =========================================================
+   BUILT-IN EXAMPLES
+   ========================================================= */
+
+const exampleSelect = document.getElementById("exampleSelect");
+
+const builtInExamples = {
+    "1": {
+        name: "University Management",
+
+        entities: [
+            {
+                name: "Student",
+                attributes: [
+                    { name: "student_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "email", type: "VARCHAR", primaryKey: false },
+                    { name: "date_of_birth", type: "DATE", primaryKey: false }
+                ]
+            },
+            {
+                name: "Department",
+                attributes: [
+                    { name: "department_id", type: "INTEGER", primaryKey: true },
+                    { name: "department_name", type: "VARCHAR", primaryKey: false },
+                    { name: "location", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Course",
+                attributes: [
+                    { name: "course_id", type: "INTEGER", primaryKey: true },
+                    { name: "course_name", type: "VARCHAR", primaryKey: false },
+                    { name: "credits", type: "INTEGER", primaryKey: false }
+                ]
+            },
+            {
+                name: "Instructor",
+                attributes: [
+                    { name: "instructor_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "email", type: "VARCHAR", primaryKey: false }
+                ]
+            }
+        ],
+
+        relationships: [
+            {
+                from: "Department",
+                to: "Student",
+                name: "has",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Department",
+                to: "Course",
+                name: "offers",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Instructor",
+                to: "Course",
+                name: "teaches",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Student",
+                to: "Course",
+                name: "enrolls",
+                type: "M:N",
+                attributes: [
+                    { name: "enrollment_date", type: "DATE" },
+                    { name: "grade", type: "VARCHAR" }
+                ]
+            }
+        ]
+    },
+
+    "2": {
+        name: "Company Management",
+
+        entities: [
+            {
+                name: "Employee",
+                attributes: [
+                    { name: "employee_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "email", type: "VARCHAR", primaryKey: false },
+                    { name: "salary", type: "DECIMAL", primaryKey: false }
+                ]
+            },
+            {
+                name: "Department",
+                attributes: [
+                    { name: "department_id", type: "INTEGER", primaryKey: true },
+                    { name: "department_name", type: "VARCHAR", primaryKey: false },
+                    { name: "location", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Project",
+                attributes: [
+                    { name: "project_id", type: "INTEGER", primaryKey: true },
+                    { name: "project_name", type: "VARCHAR", primaryKey: false },
+                    { name: "budget", type: "DECIMAL", primaryKey: false }
+                ]
+            },
+            {
+                name: "Manager",
+                attributes: [
+                    { name: "manager_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "email", type: "VARCHAR", primaryKey: false }
+                ]
+            }
+        ],
+
+        relationships: [
+            {
+                from: "Department",
+                to: "Employee",
+                name: "employs",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Manager",
+                to: "Department",
+                name: "manages",
+                type: "1:1",
+                attributes: [
+                    { name: "start_date", type: "DATE" }
+                ]
+            },
+            {
+                from: "Employee",
+                to: "Project",
+                name: "works_on",
+                type: "M:N",
+                attributes: [
+                    { name: "hours", type: "INTEGER" }
+                ]
+            },
+            {
+                from: "Department",
+                to: "Project",
+                name: "controls",
+                type: "1:N",
+                attributes: []
+            }
+        ]
+    },
+
+    "3": {
+        name: "Online Shopping",
+
+        entities: [
+            {
+                name: "Customer",
+                attributes: [
+                    { name: "customer_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "email", type: "VARCHAR", primaryKey: false },
+                    { name: "phone", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Order",
+                attributes: [
+                    { name: "order_id", type: "INTEGER", primaryKey: true },
+                    { name: "order_date", type: "DATE", primaryKey: false },
+                    { name: "total_amount", type: "DECIMAL", primaryKey: false },
+                    { name: "status", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Product",
+                attributes: [
+                    { name: "product_id", type: "INTEGER", primaryKey: true },
+                    { name: "product_name", type: "VARCHAR", primaryKey: false },
+                    { name: "price", type: "DECIMAL", primaryKey: false },
+                    { name: "stock_quantity", type: "INTEGER", primaryKey: false }
+                ]
+            },
+            {
+                name: "Payment",
+                attributes: [
+                    { name: "payment_id", type: "INTEGER", primaryKey: true },
+                    { name: "payment_date", type: "DATE", primaryKey: false },
+                    { name: "amount", type: "DECIMAL", primaryKey: false },
+                    { name: "payment_method", type: "VARCHAR", primaryKey: false }
+                ]
+            }
+        ],
+
+        relationships: [
+            {
+                from: "Customer",
+                to: "Order",
+                name: "places",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Order",
+                to: "Product",
+                name: "contains",
+                type: "M:N",
+                attributes: [
+                    { name: "quantity", type: "INTEGER" },
+                    { name: "unit_price", type: "DECIMAL" }
+                ]
+            },
+            {
+                from: "Order",
+                to: "Payment",
+                name: "has",
+                type: "1:1",
+                attributes: []
+            }
+        ]
+    },
+
+    "4": {
+        name: "Hospital Management",
+
+        entities: [
+            {
+                name: "Patient",
+                attributes: [
+                    { name: "patient_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "date_of_birth", type: "DATE", primaryKey: false },
+                    { name: "phone", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Doctor",
+                attributes: [
+                    { name: "doctor_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "specialization", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Department",
+                attributes: [
+                    { name: "department_id", type: "INTEGER", primaryKey: true },
+                    { name: "department_name", type: "VARCHAR", primaryKey: false },
+                    { name: "location", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Appointment",
+                attributes: [
+                    { name: "appointment_id", type: "INTEGER", primaryKey: true },
+                    { name: "appointment_date", type: "DATE", primaryKey: false },
+                    { name: "appointment_time", type: "VARCHAR", primaryKey: false },
+                    { name: "status", type: "VARCHAR", primaryKey: false }
+                ]
+            }
+        ],
+
+        relationships: [
+            {
+                from: "Patient",
+                to: "Appointment",
+                name: "books",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Doctor",
+                to: "Appointment",
+                name: "attends",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Department",
+                to: "Doctor",
+                name: "has",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Patient",
+                to: "Doctor",
+                name: "consults",
+                type: "M:N",
+                attributes: [
+                    { name: "consultation_date", type: "DATE" },
+                    { name: "diagnosis", type: "VARCHAR" }
+                ]
+            }
+        ]
+    },
+
+    "5": {
+        name: "University Course Registration",
+
+        entities: [
+            {
+                name: "Student",
+                attributes: [
+                    { name: "student_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "email", type: "VARCHAR", primaryKey: false },
+                    { name: "semester", type: "INTEGER", primaryKey: false }
+                ]
+            },
+            {
+                name: "Course",
+                attributes: [
+                    { name: "course_id", type: "INTEGER", primaryKey: true },
+                    { name: "course_name", type: "VARCHAR", primaryKey: false },
+                    { name: "credits", type: "INTEGER", primaryKey: false }
+                ]
+            },
+            {
+                name: "Instructor",
+                attributes: [
+                    { name: "instructor_id", type: "INTEGER", primaryKey: true },
+                    { name: "name", type: "VARCHAR", primaryKey: false },
+                    { name: "email", type: "VARCHAR", primaryKey: false }
+                ]
+            },
+            {
+                name: "Classroom",
+                attributes: [
+                    { name: "classroom_id", type: "INTEGER", primaryKey: true },
+                    { name: "building", type: "VARCHAR", primaryKey: false },
+                    { name: "room_number", type: "INTEGER", primaryKey: false },
+                    { name: "capacity", type: "INTEGER", primaryKey: false }
+                ]
+            }
+        ],
+
+        relationships: [
+            {
+                from: "Student",
+                to: "Course",
+                name: "registers",
+                type: "M:N",
+                attributes: [
+                    { name: "registration_date", type: "DATE" },
+                    { name: "grade", type: "VARCHAR" }
+                ]
+            },
+            {
+                from: "Instructor",
+                to: "Course",
+                name: "teaches",
+                type: "1:N",
+                attributes: []
+            },
+            {
+                from: "Course",
+                to: "Classroom",
+                name: "scheduled_in",
+                type: "N:1",
+                attributes: [
+                    { name: "schedule_time", type: "VARCHAR" }
+                ]
+            }
+        ]
+    }
+};
+
+
+function loadBuiltInExample(exampleId) {
+
+    const example = builtInExamples[exampleId];
+
+    if (!example) {
+        return;
+    }
+
+    entities = example.entities.map(entity => ({
+
+        name: entity.name,
+
+        attributes: entity.attributes.map(attribute => ({
+
+            id: `attr_${attributeUid++}`,
+
+            name: attribute.name,
+
+            type: attribute.type,
+
+            primaryKey: attribute.primaryKey,
+
+            x: null,
+
+            y: null,
+
+            startOffsetX: 0,
+
+            startOffsetY: 0,
+
+            lineOffsetX: 0,
+
+            lineOffsetY: 0,
+
+            endOffsetX: 0,
+
+            endOffsetY: 0
+
+        })),
+
+        x: null,
+
+        y: null
+
+    }));
+
+
+    relationships = example.relationships.map(relationship => ({
+
+        from: relationship.from,
+
+        to: relationship.to,
+
+        name: relationship.name,
+
+        type: relationship.type,
+
+        attributes: (relationship.attributes || []).map(attribute => ({
+
+            id: `rel_attr_${relationshipAttributeUid++}`,
+
+            name: attribute.name,
+
+            type: attribute.type,
+
+            x: null,
+
+            y: null,
+
+            startOffsetX: 0,
+
+            startOffsetY: 0,
+
+            lineOffsetX: 0,
+
+            lineOffsetY: 0,
+
+            endOffsetX: 0,
+
+            endOffsetY: 0
+
+        })),
+
+        x: null,
+
+        y: null,
+
+        fromSegStartOffsetX: 0,
+
+        fromSegStartOffsetY: 0,
+
+        fromOffsetX: 0,
+
+        fromOffsetY: 0,
+
+        fromSegEndOffsetX: 0,
+
+        fromSegEndOffsetY: 0,
+
+        toSegStartOffsetX: 0,
+
+        toSegStartOffsetY: 0,
+
+        toOffsetX: 0,
+
+        toOffsetY: 0,
+
+        toSegEndOffsetX: 0,
+
+        toSegEndOffsetY: 0
+
+    }));
+
+
+    sqlGenerated = false;
+
+
+    renderEntities();
+
+    updateRelationshipSelectors();
+
+    renderRelationshipList();
+
+    renderDiagram();
+
+    updateProgress();
+
+    generateBtn.click();
+
+    showValidation(
+        "success",
+        `${example.name} loaded successfully.`
+    );
+}
+
+
+if (exampleSelect) {
+
+    exampleSelect.addEventListener("change", () => {
+
+        if (!exampleSelect.value) {
+            return;
+        }
+
+        loadBuiltInExample(exampleSelect.value);
+
+    });
+
+}
