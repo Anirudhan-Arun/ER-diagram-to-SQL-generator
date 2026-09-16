@@ -11,14 +11,12 @@
 
 <header class="topbar">
  <div class="logo"><span>ER</span> → SQL Generator</div>
-
  <nav class="main-nav" aria-label="Main navigation">
   <button class="nav-btn active" data-view="dashboardView">Dashboard</button>
   <button class="nav-btn" data-view="learnView">Learn</button>
   <button class="nav-btn" data-view="developedByView">Developed By</button>
   <button class="nav-btn" data-view="helpView">Help</button>
  </nav>
-
  <div class="header-right">
   <span class="status">● Review 1 Prototype</span>
   <button id="downloadBtn" class="secondary-btn small-btn">⬇ Download</button>
@@ -40,7 +38,6 @@
 
 
  <div class="examples-section">
-
   <div class="examples-heading">
    <div>
     <h3>Built-in Examples</h3>
@@ -65,6 +62,48 @@
  </div>
 
 
+ <div class="drawio-import-section">
+
+  <div class="build-own-heading">
+   <h3>Import Draw.io ER Diagram</h3>
+   <p>Upload a standard Draw.io ER diagram and convert it into SQL.</p>
+  </div>
+
+  <div class="drawio-upload-box">
+
+   <label for="drawioFile" class="drawio-file-label">
+    Choose Draw.io File
+   </label>
+
+   <input
+    id="drawioFile"
+    type="file"
+    accept=".drawio"
+    hidden
+   >
+
+   <p id="drawioFileName" class="drawio-file-name">
+    No Draw.io file selected.
+   </p>
+
+   <button
+    id="importDrawioBtn"
+    class="primary-btn"
+    type="button">
+    Import Draw.io Diagram
+   </button>
+
+   <small>
+    Use standard ER notation: rectangles for entities,
+    ovals for attributes, diamonds for relationships and
+    connectors for relationships.
+   </small>
+
+  </div>
+
+ </div>
+
+
  <div class="build-own-heading">
   <h3>Build Your Own ER Diagram</h3>
   <p>Create your own entities, attributes and relationships.</p>
@@ -75,7 +114,6 @@
   <label>Entity Name</label>
   <input id="entityName" type="text" placeholder="e.g. Student">
  </div>
-
 
  <div class="form-group">
   <label>Attributes</label>
@@ -308,12 +346,27 @@
  </div>
 
 
+ <div class="explanation-card">
+
+  <div class="info-icon">↗</div>
+
+  <div>
+
+   <h3>Draw.io Import</h3>
+
+   <p>
+    A standard Draw.io ER diagram can also be uploaded and
+    converted into the application's ER model and SQL output.
+   </p>
+
+  </div>
+
+ </div>
+
+
  <div id="validationBox" class="validation-box">
-
   <strong>Validation</strong>
-
   <p>Add an entity to begin.</p>
-
  </div>
 
 
@@ -406,7 +459,43 @@
 
  <div class="learn-block">
 
-  <h3>2. Animated / Educational Video</h3>
+  <h3>2. Draw.io ER Diagram Import</h3>
+
+  <div class="content-card">
+
+   <h4>Importing an Existing ER Diagram</h4>
+
+   <p>
+    The application also supports importing a standard ER diagram
+    created using Draw.io. The uploaded diagram is analyzed to identify
+    entities, attributes, relationships and cardinalities.
+   </p>
+
+   <p>
+    Rectangles are interpreted as entities, ovals as attributes,
+    diamonds as relationships and connectors as associations between
+    diagram elements. The extracted ER model is then passed to the
+    same conversion process used for manually entered diagrams.
+   </p>
+
+   <p>
+    This allows an existing Draw.io ER diagram to be converted
+    directly into SQL without manually entering the complete model again.
+   </p>
+
+   <p>
+    For best results, use standard ER notation when creating the
+    Draw.io diagram.
+   </p>
+
+  </div>
+
+ </div>
+
+
+ <div class="learn-block">
+
+  <h3>3. Animated / Educational Video</h3>
 
   <div id="videoEmbed" class="video-placeholder">
 
@@ -426,7 +515,7 @@
 
  <div class="learn-block">
 
-  <h3>3. References</h3>
+  <h3>4. References</h3>
 
   <div class="content-card">
 
@@ -435,12 +524,10 @@
    </p>
 
    <ul id="referencesList">
-
     <li>Reference 1 — To be added</li>
     <li>Reference 2 — To be added</li>
     <li>Research paper / educational website — To be added</li>
     <li>Video source — To be added</li>
-
    </ul>
 
   </div>
@@ -533,6 +620,11 @@
    statements from the model.
   </p>
 
+  <p>
+   An existing ER diagram can also be imported from Draw.io
+   and converted into the same ER model and SQL output.
+  </p>
+
  </div>
 
 
@@ -545,6 +637,30 @@
    predefined ER models. Five examples are provided covering
    university management, company management, online shopping,
    hospital management and university course registration.
+  </p>
+
+ </div>
+
+
+ <div class="help-section">
+
+  <h3>Draw.io ER Diagram Import</h3>
+
+  <p>
+   You can upload a standard Draw.io ER diagram using the
+   <strong>Import Draw.io Diagram</strong> option on the Dashboard.
+  </p>
+
+  <p>
+   The application analyzes the diagram and attempts to identify
+   entities, attributes, relationships and cardinalities before
+   converting the detected model into SQL.
+  </p>
+
+  <p>
+   For best results, use rectangles for entities, ovals for
+   attributes, diamonds for relationships and connectors between
+   the corresponding elements.
   </p>
 
  </div>
