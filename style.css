@@ -637,3 +637,333 @@ body.light #sqlOutput{background:#f3f5f9}
 .relationship-item span{
     line-height:1.5;
 }
+/* ============================
+   WEBSITE NAVIGATION
+   ============================ */
+
+.main-nav{
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+.nav-btn{
+    background:transparent;
+    border:1px solid transparent;
+    color:var(--muted);
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.nav-btn:hover{
+    color:var(--text);
+    background:var(--panel-light);
+}
+
+.nav-btn.active{
+    color:var(--text);
+    background:rgba(108,140,255,.14);
+    border-color:rgba(108,140,255,.35);
+}
+
+.view{
+    display:none;
+}
+
+.view.active-view{
+    display:block;
+}
+
+.info-page{
+    max-width:1100px;
+    margin:20px auto;
+    min-height:0;
+}
+
+.info-page p,
+.info-page li{
+    font-size:13px;
+    line-height:1.7;
+}
+
+.learn-block{
+    margin-bottom:30px;
+}
+
+.learn-block > h3{
+    font-size:15px;
+    margin-bottom:12px;
+}
+
+.content-card{
+    background:var(--panel-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+}
+
+.content-card h4{
+    margin:0 0 10px;
+    font-size:14px;
+}
+
+.content-card p{
+    color:var(--muted);
+}
+
+.content-card li{
+    margin-bottom:7px;
+    color:var(--muted);
+}
+
+.video-placeholder{
+    min-height:250px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:var(--panel-light);
+    border:1px dashed var(--border);
+    border-radius:12px;
+    padding:30px;
+}
+
+.video-icon{
+    width:55px;
+    height:55px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:rgba(108,140,255,.15);
+    color:var(--accent);
+    font-size:22px;
+    margin-bottom:12px;
+}
+
+.video-placeholder h4{
+    margin:0 0 8px;
+}
+
+.video-placeholder p{
+    color:var(--muted);
+    max-width:550px;
+}
+
+.team-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+}
+
+.team-card{
+    width:220px;
+    text-align:center;
+    background:var(--panel-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+}
+
+.team-photo{
+    width:100px;
+    height:100px;
+    margin:0 auto 14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:rgba(108,140,255,.12);
+    font-size:30px;
+}
+
+.team-card h3{
+    margin:0 0 8px;
+    font-size:15px;
+}
+
+.team-card p{
+    margin:0;
+    color:var(--muted);
+    font-size:12px;
+}
+
+.guided-by-box{
+    margin-top:25px;
+    padding:18px;
+    background:var(--panel-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+}
+
+.guided-by-box h3{
+    margin:0 0 8px;
+    font-size:14px;
+}
+
+.guided-by-box p{
+    margin:4px 0;
+    color:var(--muted);
+}
+
+.help-section{
+    padding:18px;
+    margin-bottom:14px;
+    background:var(--panel-light);
+    border:1px solid var(--border);
+    border-radius:12px;
+}
+
+.help-section h3{
+    margin:0 0 8px;
+    font-size:14px;
+}
+
+.help-section p{
+    margin:0;
+    color:var(--muted);
+}
+
+.help-section .example{
+    margin-top:10px;
+    padding:10px;
+    border-left:3px solid var(--accent);
+    background:rgba(108,140,255,.08);
+    color:var(--text);
+}
+
+/* ============================
+   ZOOM CONTROLS
+   ============================ */
+
+.zoom-controls{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-right:auto;
+}
+
+#zoomLevel{
+    min-width:48px;
+    text-align:center;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:600;
+}
+
+.diagram-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    margin-bottom:10px;
+}
+
+/* ============================
+   DOWNLOAD
+   ============================ */
+
+.download-overlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.58);
+    z-index:9999;
+}
+
+.download-overlay.open{
+    display:flex;
+}
+
+.download-modal{
+    width:min(400px,calc(100vw - 30px));
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.download-modal h3{
+    margin:0 0 7px;
+    font-size:17px;
+}
+
+.download-modal p{
+    margin:0 0 18px;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+}
+
+.download-options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.download-options button{
+    width:100%;
+}
+
+.download-cancel{
+    width:100%;
+    margin-top:14px;
+    padding:9px;
+    border:none;
+    background:none;
+    color:var(--muted);
+    cursor:pointer;
+    font-family:inherit;
+}
+
+@media(max-width:900px){
+
+    .topbar{
+        height:auto;
+        min-height:70px;
+        flex-wrap:wrap;
+        gap:10px;
+        padding:12px 15px;
+    }
+
+    .main-nav{
+        order:3;
+        width:100%;
+        overflow-x:auto;
+        padding-bottom:3px;
+    }
+
+    .nav-btn{
+        white-space:nowrap;
+    }
+
+    .header-right{
+        margin-left:auto;
+    }
+}
+
+@media(max-width:700px){
+
+    .diagram-toolbar{
+        flex-wrap:wrap;
+    }
+
+    .zoom-controls{
+        width:100%;
+        margin-right:0;
+    }
+
+    .info-page{
+        margin:12px;
+    }
+}
