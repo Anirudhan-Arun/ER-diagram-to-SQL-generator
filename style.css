@@ -968,7 +968,7 @@ body.light #sqlOutput{background:#f3f5f9}
     }
 }
 /* ============================
-   LIGHT MODE FIX
+   LIGHT MODE
    ============================ */
 
 body.light{
@@ -981,50 +981,67 @@ body.light{
     --accent:#405fd0;
     --success:#15966f;
     --danger:#d83d52;
+
+    background:linear-gradient(180deg,#f3f6fb 0%,#e9eef6 100%);
+    color:#172033;
 }
 
-body.light{
-    background:linear-gradient(180deg,#f3f6fb 0%,#e9eef6 100%);
-    color:var(--text);
+/* GENERAL TEXT */
+
+body.light .panel,
+body.light .sql-section,
+body.light .info-page,
+body.light .learn-block,
+body.light .relationship-section,
+body.light .entity-list-section,
+body.light .explanation-panel{
+    color:#172033;
 }
+
+body.light h1,
+body.light h2,
+body.light h3,
+body.light h4,
+body.light h5,
+body.light h6{
+    color:#172033;
+}
+
+body.light p{
+    color:#536176;
+}
+
+body.light label,
+body.light strong{
+    color:#172033;
+}
+
+/* TOP BAR */
 
 body.light .topbar{
     background:rgba(255,255,255,.96);
-    border-bottom:1px solid var(--border);
+    border-bottom:1px solid #c8d1df;
 }
 
-body.light .panel,
-body.light .sql-section{
+body.light .logo{
+    color:#172033;
+}
+
+body.light .logo span{
+    color:#405fd0;
+}
+
+body.light .status{
+    color:#15966f;
+}
+
+body.light .theme-btn{
     background:#ffffff;
-    border-color:var(--border);
-}
-
-body.light .form-group input,
-body.light .relationship-form select,
-body.light .relationship-attributes-input input{
-    background:#ffffff;
     color:#172033;
-    border-color:#bcc7d8;
+    border-color:#c8d1df;
 }
 
-body.light .form-group input::placeholder,
-body.light .relationship-attributes-input input::placeholder{
-    color:#7a8799;
-}
-
-body.light .relationship-form select{
-    color:#172033;
-}
-
-body.light .secondary-btn{
-    background:#f1f4f8;
-    color:#172033;
-    border-color:#c4cedc;
-}
-
-body.light .secondary-btn:hover{
-    background:#e7ecf3;
-}
+/* NAVIGATION */
 
 body.light .nav-btn{
     color:#536176;
@@ -1041,15 +1058,103 @@ body.light .nav-btn.active{
     border-color:#b9c6f5;
 }
 
+/* PANELS */
+
+body.light .panel{
+    background:#ffffff;
+    border-color:#c8d1df;
+}
+
+body.light .panel-title h2{
+    color:#172033;
+}
+
+body.light .panel-title p{
+    color:#536176;
+}
+
+/* BADGES */
+
+body.light .step-badge,
+body.light .ai-badge{
+    color:#4054a5;
+    background:#eef2ff;
+    border-color:#c4d0ee;
+}
+
+/* FORM */
+
+body.light .form-group label{
+    color:#172033;
+}
+
+body.light .form-group input,
+body.light .relationship-form select,
+body.light .relationship-attributes-input input{
+    background:#ffffff;
+    color:#172033;
+    border-color:#bcc7d8;
+}
+
+body.light .form-group input::placeholder,
+body.light .relationship-attributes-input input::placeholder{
+    color:#7a8799;
+}
+
+body.light .form-group small,
+body.light .relationship-attributes-input small{
+    color:#536176;
+}
+
+body.light .relationship-form select{
+    color:#172033;
+}
+
+/* BUTTONS */
+
+body.light .secondary-btn{
+    background:#f1f4f8;
+    color:#172033;
+    border-color:#c4cedc;
+}
+
+body.light .secondary-btn:hover{
+    background:#e7ecf3;
+}
+
+body.light .primary-btn,
+body.light .generate-btn{
+    color:#ffffff;
+}
+
+/* ENTITY LIST */
+
+body.light .entity-list-section h3,
+body.light .relationship-section h3{
+    color:#172033;
+}
+
 body.light .entity-item,
-body.light .relationship-item,
-body.light .explanation-card,
-body.light .content-card,
-body.light .help-section,
-body.light .team-card,
-body.light .guided-by-box{
+body.light .relationship-item{
     background:#f8fafc;
     border-color:#cbd4e1;
+    color:#172033;
+}
+
+body.light .entity-item strong{
+    color:#172033;
+}
+
+body.light .entity-item span{
+    color:#536176;
+}
+
+body.light .relationship-item{
+    color:#172033;
+}
+
+body.light .relationship-item span{
+    color:#172033;
 }
 
 body.light .empty-state{
@@ -1057,8 +1162,13 @@ body.light .empty-state{
     border-color:#bfc9d8;
 }
 
+body.light .delete-btn{
+    color:#d83d52;
+}
+
+/* DIAGRAM */
+
 body.light .diagram-area{
-    border-color:#c8d1df;
     background:
         radial-gradient(
             circle,
@@ -1066,7 +1176,26 @@ body.light .diagram-area{
             transparent 1px
         );
     background-size:24px 24px;
+    border-color:#c8d1df;
 }
+
+body.light .diagram-placeholder{
+    color:#536176;
+}
+
+body.light .diagram-placeholder h3{
+    color:#172033;
+}
+
+body.light .diagram-placeholder p{
+    color:#536176;
+}
+
+body.light .placeholder-icon{
+    color:#405fd0;
+}
+
+/* ER ENTITY */
 
 body.light .er-entity{
     background:#ffffff;
@@ -1074,6 +1203,8 @@ body.light .er-entity{
     border-color:#405fd0;
     box-shadow:0 8px 22px rgba(31,48,78,.12);
 }
+
+/* ER ATTRIBUTES */
 
 body.light .er-attribute,
 body.light .er-relationship-attribute{
@@ -1083,24 +1214,28 @@ body.light .er-relationship-attribute{
     box-shadow:0 6px 16px rgba(31,48,78,.10);
 }
 
+body.light .attribute-name{
+    color:#172033;
+}
+
+body.light .attribute-type,
 body.light .er-attribute .attribute-type,
 body.light .er-relationship-attribute .attribute-type{
     color:#536176;
 }
 
-body.light .relationship-diamond{
-    background:#ffffff !important;
-    border-color:#15966f !important;
-    box-shadow:0 6px 16px rgba(31,48,78,.10);
+/* PRIMARY KEY */
+
+body.light .er-attribute.primary-key{
+    border-color:#15966f;
 }
 
-body.light .relationship-name{
-    color:#172033 !important;
+body.light .er-attribute.primary-key::after{
+    background:#15966f;
+    color:#ffffff;
 }
 
-body.light .cardinality-label{
-    fill:#172033;
-}
+/* ER LINES */
 
 body.light .er-line{
     background:#65738a;
@@ -1110,12 +1245,112 @@ body.light .relationship-line{
     stroke:#65738a;
 }
 
+/* RELATIONSHIP */
+
+body.light .relationship-diamond{
+    fill:#ffffff !important;
+    background:#ffffff !important;
+    border-color:#15966f !important;
+    box-shadow:0 6px 16px rgba(31,48,78,.10);
+}
+
+body.light .relationship-name{
+    fill:#172033 !important;
+    color:#172033 !important;
+}
+
+body.light .cardinality-label{
+    fill:#172033;
+}
+
+/* LEGEND */
+
+body.light .notation-legend{
+    color:#536176;
+}
+
+body.light .notation-legend div{
+    color:#536176;
+}
+
+/* FLOW */
+
+body.light .flow-step{
+    color:#536176;
+}
+
+body.light .flow-step.active{
+    color:#172033;
+}
+
+body.light .flow-arrow{
+    color:#536176;
+}
+
+body.light .flow-step span{
+    color:#536176;
+}
+
+/* EXPLANATION */
+
+body.light .explanation-card{
+    background:#f8fafc;
+    border-color:#cbd4e1;
+}
+
+body.light .explanation-card h3{
+    color:#172033;
+}
+
+body.light .explanation-card p{
+    color:#536176;
+}
+
+body.light .info-icon{
+    color:#405fd0;
+}
+
+/* VALIDATION */
+
 body.light .validation-box{
     background:#eef3ff;
     border-color:#c4d0ee;
 }
 
+body.light .validation-box strong{
+    color:#172033;
+}
+
 body.light .validation-box p{
+    color:#536176;
+}
+
+/* FUTURE FEATURE */
+
+body.light .future-feature{
+    border-color:#bfc9d8;
+}
+
+body.light .future-feature span{
+    color:#405fd0;
+}
+
+body.light .future-feature p{
+    color:#536176;
+}
+
+/* SQL */
+
+body.light .sql-section{
+    background:#ffffff;
+    border-color:#c8d1df;
+}
+
+body.light .sql-header h2{
+    color:#172033;
+}
+
+body.light .sql-header p{
     color:#536176;
 }
 
@@ -1125,22 +1360,58 @@ body.light #sqlOutput{
     border-color:#c8d1df;
 }
 
-body.light .sql-header p{
-    color:#536176;
-}
+/* INFO / LEARN / HELP PAGES */
 
-body.light footer{
-    color:#536176;
-}
-
+body.light .content-card,
+body.light .help-section,
+body.light .team-card,
+body.light .guided-by-box,
 body.light .video-placeholder{
     background:#f8fafc;
+    border-color:#cbd4e1;
+}
+
+body.light .content-card h4,
+body.light .help-section h3,
+body.light .team-card h3,
+body.light .guided-by-box h3,
+body.light .video-placeholder h4{
+    color:#172033;
+}
+
+body.light .content-card p,
+body.light .content-card li,
+body.light .help-section p,
+body.light .team-card p,
+body.light .guided-by-box p,
+body.light .video-placeholder p{
+    color:#536176;
+}
+
+body.light .help-section .example{
+    color:#172033;
+}
+
+/* TEAM */
+
+body.light .team-photo{
+    background:#eef3ff;
     border-color:#c8d1df;
+}
+
+/* DOWNLOAD */
+
+body.light .download-overlay{
+    background:rgba(20,30,50,.35);
 }
 
 body.light .download-modal{
     background:#ffffff;
     border-color:#c8d1df;
+}
+
+body.light .download-modal h3{
+    color:#172033;
 }
 
 body.light .download-modal p{
@@ -1151,23 +1422,18 @@ body.light .download-cancel{
     color:#536176;
 }
 
-body.light .team-photo{
-    background:#eef3ff;
-    border-color:#c8d1df;
-}
+/* ZOOM */
 
-body.light .step-badge{
-    color:#4054a5;
-}
-
-body.light .flow-step{
+body.light .zoom-controls #zoomLevel{
     color:#536176;
 }
 
-body.light .flow-step.active{
+body.light .small-btn{
     color:#172033;
 }
 
-body.light .zoom-controls #zoomLevel{
+/* FOOTER */
+
+body.light footer{
     color:#536176;
 }
