@@ -263,7 +263,7 @@
 
 
         lines.push(
-            "ER → SQL GENERATOR"
+            "ER --> SQL GENERATOR"
         );
 
         lines.push(
