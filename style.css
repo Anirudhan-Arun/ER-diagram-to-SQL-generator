@@ -967,3 +967,207 @@ body.light #sqlOutput{background:#f3f5f9}
         margin:12px;
     }
 }
+/* ============================
+   LIGHT MODE FIX
+   ============================ */
+
+body.light{
+    --background:#f3f6fb;
+    --panel:#ffffff;
+    --panel-light:#f8fafc;
+    --text:#172033;
+    --muted:#536176;
+    --border:#c8d1df;
+    --accent:#405fd0;
+    --success:#15966f;
+    --danger:#d83d52;
+}
+
+body.light{
+    background:linear-gradient(180deg,#f3f6fb 0%,#e9eef6 100%);
+    color:var(--text);
+}
+
+body.light .topbar{
+    background:rgba(255,255,255,.96);
+    border-bottom:1px solid var(--border);
+}
+
+body.light .panel,
+body.light .sql-section{
+    background:#ffffff;
+    border-color:var(--border);
+}
+
+body.light .form-group input,
+body.light .relationship-form select,
+body.light .relationship-attributes-input input{
+    background:#ffffff;
+    color:#172033;
+    border-color:#bcc7d8;
+}
+
+body.light .form-group input::placeholder,
+body.light .relationship-attributes-input input::placeholder{
+    color:#7a8799;
+}
+
+body.light .relationship-form select{
+    color:#172033;
+}
+
+body.light .secondary-btn{
+    background:#f1f4f8;
+    color:#172033;
+    border-color:#c4cedc;
+}
+
+body.light .secondary-btn:hover{
+    background:#e7ecf3;
+}
+
+body.light .nav-btn{
+    color:#536176;
+}
+
+body.light .nav-btn:hover{
+    color:#172033;
+    background:#edf1f7;
+}
+
+body.light .nav-btn.active{
+    color:#263d9c;
+    background:#e8edff;
+    border-color:#b9c6f5;
+}
+
+body.light .entity-item,
+body.light .relationship-item,
+body.light .explanation-card,
+body.light .content-card,
+body.light .help-section,
+body.light .team-card,
+body.light .guided-by-box{
+    background:#f8fafc;
+    border-color:#cbd4e1;
+}
+
+body.light .empty-state{
+    color:#536176;
+    border-color:#bfc9d8;
+}
+
+body.light .diagram-area{
+    border-color:#c8d1df;
+    background:
+        radial-gradient(
+            circle,
+            rgba(64,95,208,.12) 1px,
+            transparent 1px
+        );
+    background-size:24px 24px;
+}
+
+body.light .er-entity{
+    background:#ffffff;
+    color:#172033;
+    border-color:#405fd0;
+    box-shadow:0 8px 22px rgba(31,48,78,.12);
+}
+
+body.light .er-attribute,
+body.light .er-relationship-attribute{
+    background:#ffffff;
+    color:#172033;
+    border-color:#7d899c;
+    box-shadow:0 6px 16px rgba(31,48,78,.10);
+}
+
+body.light .er-attribute .attribute-type,
+body.light .er-relationship-attribute .attribute-type{
+    color:#536176;
+}
+
+body.light .relationship-diamond{
+    background:#ffffff !important;
+    border-color:#15966f !important;
+    box-shadow:0 6px 16px rgba(31,48,78,.10);
+}
+
+body.light .relationship-name{
+    color:#172033 !important;
+}
+
+body.light .cardinality-label{
+    fill:#172033;
+}
+
+body.light .er-line{
+    background:#65738a;
+}
+
+body.light .relationship-line{
+    stroke:#65738a;
+}
+
+body.light .validation-box{
+    background:#eef3ff;
+    border-color:#c4d0ee;
+}
+
+body.light .validation-box p{
+    color:#536176;
+}
+
+body.light #sqlOutput{
+    background:#f7f9fc;
+    color:#26364f;
+    border-color:#c8d1df;
+}
+
+body.light .sql-header p{
+    color:#536176;
+}
+
+body.light footer{
+    color:#536176;
+}
+
+body.light .video-placeholder{
+    background:#f8fafc;
+    border-color:#c8d1df;
+}
+
+body.light .download-modal{
+    background:#ffffff;
+    border-color:#c8d1df;
+}
+
+body.light .download-modal p{
+    color:#536176;
+}
+
+body.light .download-cancel{
+    color:#536176;
+}
+
+body.light .team-photo{
+    background:#eef3ff;
+    border-color:#c8d1df;
+}
+
+body.light .step-badge{
+    color:#4054a5;
+}
+
+body.light .flow-step{
+    color:#536176;
+}
+
+body.light .flow-step.active{
+    color:#172033;
+}
+
+body.light .zoom-controls #zoomLevel{
+    color:#536176;
+}
