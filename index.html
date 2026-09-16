@@ -26,6 +26,7 @@
  </div>
 </header>
 
+
 <div id="dashboardView" class="view active-view">
 
 <main class="dashboard">
@@ -37,10 +38,44 @@
   <p>Define entities, attributes and relationships.</p>
  </div>
 
+
+ <div class="examples-section">
+
+  <div class="examples-heading">
+   <div>
+    <h3>Built-in Examples</h3>
+    <p>Choose a predefined ER model to explore.</p>
+   </div>
+  </div>
+
+  <select id="exampleSelect" class="example-select">
+   <option value="">Select an example</option>
+   <option value="1">Example 1 — University Management</option>
+   <option value="2">Example 2 — Company Management</option>
+   <option value="3">Example 3 — Online Shopping</option>
+   <option value="4">Example 4 — Hospital Management</option>
+   <option value="5">Example 5 — University Course Registration</option>
+  </select>
+
+  <small class="example-help">
+   Selecting an example automatically loads its entities,
+   relationships and generated SQL.
+  </small>
+
+ </div>
+
+
+ <div class="build-own-heading">
+  <h3>Build Your Own ER Diagram</h3>
+  <p>Create your own entities, attributes and relationships.</p>
+ </div>
+
+
  <div class="form-group">
   <label>Entity Name</label>
   <input id="entityName" type="text" placeholder="e.g. Student">
  </div>
+
 
  <div class="form-group">
   <label>Attributes</label>
@@ -48,16 +83,21 @@
   <small>Separate attributes using commas. Data types and primary keys are detected automatically.</small>
  </div>
 
+
  <button id="addEntityBtn" class="primary-btn">+ Add Entity</button>
+
 
  <div class="entity-list-section">
   <h3>Entities</h3>
+
   <div id="entityList" class="entity-list">
    <div class="empty-state">No entities added yet.</div>
   </div>
  </div>
 
+
  <div class="entity-list-section relationship-section">
+
   <h3>Relationships</h3>
 
   <select id="relFrom">
@@ -78,9 +118,19 @@
   </select>
 
   <div class="relationship-attributes-input">
+
    <label>Relationship Attributes</label>
-   <input id="relationshipAttributes" type="text" placeholder="e.g. date, duration, room_no">
-   <small>Optional. Separate relationship attributes using commas.</small>
+
+   <input
+    id="relationshipAttributes"
+    type="text"
+    placeholder="e.g. date, duration, room_no"
+   >
+
+   <small>
+    Optional. Separate relationship attributes using commas.
+   </small>
+
   </div>
 
   <button id="addRelBtn" class="primary-btn">+ Add Relationship</button>
@@ -88,30 +138,43 @@
   <div id="relationshipList" class="entity-list">
    <div class="empty-state">No relationships added yet.</div>
   </div>
+
  </div>
+
 
  <button id="generateBtn" class="generate-btn">Generate SQL →</button>
 
 </section>
 
+
 <section class="panel visualization-panel">
 
  <div class="panel-title">
+
   <div>
    <h2>ER Diagram</h2>
    <p>Standard ER notation visualization.</p>
   </div>
 
   <span id="stepBadge" class="step-badge">Step 1</span>
+
  </div>
+
 
  <div class="diagram-toolbar">
 
   <div class="zoom-controls">
+
    <button id="zoomOutBtn" class="secondary-btn small-btn">−</button>
+
    <span id="zoomLevel">100%</span>
+
    <button id="zoomInBtn" class="secondary-btn small-btn">+</button>
-   <button id="zoomResetBtn" class="secondary-btn small-btn">Reset Zoom</button>
+
+   <button id="zoomResetBtn" class="secondary-btn small-btn">
+    Reset Zoom
+   </button>
+
   </div>
 
   <button id="resetLayoutBtn" class="secondary-btn small-btn">
@@ -120,39 +183,69 @@
 
  </div>
 
+
  <div id="diagramArea" class="diagram-area">
+
   <div class="diagram-placeholder">
+
    <div class="placeholder-icon">◇</div>
+
    <h3>Your ER diagram will appear here</h3>
-   <p>Add an entity to begin building your database model.</p>
+
+   <p>
+    Add an entity to begin building your database model.
+   </p>
+
   </div>
+
  </div>
+
 
  <div class="notation-legend">
-  <div><span class="legend-rectangle"></span>Entity</div>
-  <div><span class="legend-oval"></span>Attribute</div>
-  <div><span class="legend-diamond"></span>Relationship</div>
+
+  <div>
+   <span class="legend-rectangle"></span>
+   Entity
+  </div>
+
+  <div>
+   <span class="legend-oval"></span>
+   Attribute
+  </div>
+
+  <div>
+   <span class="legend-diamond"></span>
+   Relationship
+  </div>
+
  </div>
 
+
  <div class="conversion-flow">
+
   <div id="flowEntities" class="flow-step">
-   <span>1</span>Entities
+   <span>1</span>
+   Entities
   </div>
 
   <div class="flow-arrow">→</div>
 
   <div id="flowRelations" class="flow-step">
-   <span>2</span>Relations
+   <span>2</span>
+   Relations
   </div>
 
   <div class="flow-arrow">→</div>
 
   <div id="flowSql" class="flow-step">
-   <span>3</span>SQL
+   <span>3</span>
+   SQL
   </div>
+
  </div>
 
 </section>
+
 
 <section class="panel explanation-panel">
 
@@ -160,34 +253,69 @@
   <h2>Explanation</h2>
  </div>
 
+
  <div class="explanation-card">
+
   <div class="info-icon">i</div>
+
   <div>
+
    <h3>What is an ER Diagram?</h3>
-   <p>An Entity-Relationship diagram represents entities, attributes and relationships in a database.</p>
+
+   <p>
+    An Entity-Relationship diagram represents entities,
+    attributes and relationships in a database.
+   </p>
+
   </div>
+
  </div>
 
+
  <div class="explanation-card">
+
   <div class="info-icon">→</div>
+
   <div>
+
    <h3>Cardinality</h3>
-   <p>Cardinality describes how many instances of one entity can be associated with another entity.</p>
+
+   <p>
+    Cardinality describes how many instances of one entity
+    can be associated with another entity.
+   </p>
+
   </div>
+
  </div>
 
+
  <div class="explanation-card">
+
   <div class="info-icon">◇</div>
+
   <div>
+
    <h3>Relationship Attributes</h3>
-   <p>A relationship can have its own attributes. These are represented as ovals connected to the relationship diamond.</p>
+
+   <p>
+    A relationship can have its own attributes. These are
+    represented as ovals connected to the relationship diamond.
+   </p>
+
   </div>
+
  </div>
+
 
  <div id="validationBox" class="validation-box">
+
   <strong>Validation</strong>
+
   <p>Add an entity to begin.</p>
+
  </div>
+
 
  <div class="future-feature"></div>
 
@@ -195,15 +323,20 @@
 
 </main>
 
+
 <section class="sql-section">
 
  <div class="sql-header">
+
   <div>
    <h2>Generated SQL</h2>
    <p>SQL statements generated from your ER model.</p>
   </div>
 
-  <button id="copyBtn" class="secondary-btn">Copy SQL</button>
+  <button id="copyBtn" class="secondary-btn">
+   Copy SQL
+  </button>
+
  </div>
 
  <pre id="sqlOutput"><code>-- Generated SQL will appear here.</code></pre>
@@ -212,16 +345,25 @@
 
 </div>
 
+
 <div id="learnView" class="view">
 
 <section class="panel info-page">
 
  <div class="panel-title">
+
   <div>
+
    <h2>Learn</h2>
-   <p>Learn how an Entity-Relationship model can be converted into SQL.</p>
+
+   <p>
+    Learn how an Entity-Relationship model can be converted into SQL.
+   </p>
+
   </div>
+
  </div>
+
 
  <div class="learn-block">
 
@@ -261,6 +403,7 @@
 
  </div>
 
+
  <div class="learn-block">
 
   <h3>2. Animated / Educational Video</h3>
@@ -280,6 +423,7 @@
 
  </div>
 
+
  <div class="learn-block">
 
   <h3>3. References</h3>
@@ -291,10 +435,12 @@
    </p>
 
    <ul id="referencesList">
+
     <li>Reference 1 — To be added</li>
     <li>Reference 2 — To be added</li>
     <li>Research paper / educational website — To be added</li>
     <li>Video source — To be added</li>
+
    </ul>
 
   </div>
@@ -305,6 +451,7 @@
 
 </div>
 
+
 <div id="developedByView" class="view">
 
 <section class="panel info-page">
@@ -312,11 +459,15 @@
  <div class="panel-title">
 
   <div>
+
    <h2>Developed By</h2>
+
    <p>Project and student information.</p>
+
   </div>
 
  </div>
+
 
  <div class="team-grid">
 
@@ -337,12 +488,12 @@
 
  </div>
 
+
  <div class="guided-by-box">
 
   <h3>Guided By</h3>
 
   <p><strong>Dr. Swaminathan A</strong></p>
-
   <p>Assistant Professor</p>
 
  </div>
@@ -351,6 +502,7 @@
 
 </div>
 
+
 <div id="helpView" class="view">
 
 <section class="panel info-page">
@@ -358,11 +510,17 @@
  <div class="panel-title">
 
   <div>
+
    <h2>Help</h2>
-   <p>Step-by-step guide to using the ER → SQL Generator.</p>
+
+   <p>
+    Step-by-step guide to using the ER → SQL Generator.
+   </p>
+
   </div>
 
  </div>
+
 
  <div class="help-section">
 
@@ -376,6 +534,21 @@
   </p>
 
  </div>
+
+
+ <div class="help-section">
+
+  <h3>Built-in Examples</h3>
+
+  <p>
+   Use the Built-in Examples dropdown on the Dashboard to load
+   predefined ER models. Five examples are provided covering
+   university management, company management, online shopping,
+   hospital management and university course registration.
+  </p>
+
+ </div>
+
 
  <div class="help-section">
 
@@ -396,6 +569,7 @@
 
  </div>
 
+
  <div class="help-section">
 
   <h3>Step 2 — Add Relationships</h3>
@@ -412,6 +586,7 @@
 
  </div>
 
+
  <div class="help-section">
 
   <h3>Step 3 — Add Relationship Attributes</h3>
@@ -422,6 +597,7 @@
   </p>
 
  </div>
+
 
  <div class="help-section">
 
@@ -435,6 +611,7 @@
 
  </div>
 
+
  <div class="help-section">
 
   <h3>Step 5 — Zoom the Diagram</h3>
@@ -446,6 +623,7 @@
   </p>
 
  </div>
+
 
  <div class="help-section">
 
@@ -459,6 +637,7 @@
 
  </div>
 
+
  <div class="help-section">
 
   <h3>Step 7 — Review the Output</h3>
@@ -469,6 +648,7 @@
   </p>
 
  </div>
+
 
  <div class="help-section">
 
@@ -481,6 +661,7 @@
 
  </div>
 
+
  <div class="help-section">
 
   <h3>Download</h3>
@@ -492,6 +673,7 @@
   </p>
 
  </div>
+
 
  <div class="help-section">
 
@@ -508,12 +690,18 @@
 
 </div>
 
+
 <footer>
- <p>ER → SQL Generator · DBMS Module 1 · Interactive Learning Tool</p>
+
+ <p>
+  ER → SQL Generator · DBMS Module 1 · Interactive Learning Tool
+ </p>
+
 </footer>
 
-<script src="script.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="script.js"></script>
 <script src="extra.js"></script>
 
 </body>
