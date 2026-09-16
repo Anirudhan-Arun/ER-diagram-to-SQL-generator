@@ -780,7 +780,7 @@ body.light #sqlOutput{background:#f3f5f9}
     border-radius:50%;
     border:1px solid var(--border);
     background:rgba(108,140,255,.12);
-    font-size:30px;
+    overflow:hidden;
 }
 
 .team-photo img{
@@ -788,6 +788,7 @@ body.light #sqlOutput{background:#f3f5f9}
     height:100%;
     object-fit:cover;
     border-radius:50%;
+    display:block;
 }
 
 .team-card h3{
