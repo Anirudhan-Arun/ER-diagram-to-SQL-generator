@@ -1935,3 +1935,1061 @@ if (exampleSelect) {
     });
 
 }
+/* =========================================================
+   DRAW.IO ER DIAGRAM IMPORT
+========================================================= */
+
+const drawioFile = document.getElementById("drawioFile");
+const drawioFileName = document.getElementById("drawioFileName");
+const importDrawioBtn = document.getElementById("importDrawioBtn");
+
+if (drawioFile) {
+    drawioFile.addEventListener("change", () => {
+        const file = drawioFile.files && drawioFile.files[0];
+
+        if (!file) {
+            if (drawioFileName) {
+                drawioFileName.textContent = "No Draw.io file selected.";
+            }
+            return;
+        }
+
+        if (!file.name.toLowerCase().endsWith(".drawio")) {
+            drawioFile.value = "";
+            if (drawioFileName) {
+                drawioFileName.textContent = "No Draw.io file selected.";
+            }
+            showValidation("error", "Please select a .drawio file.");
+            return;
+        }
+
+        if (drawioFileName) {
+            drawioFileName.textContent = file.name;
+        }
+
+        showValidation("success", `${file.name} selected. Click Import Draw.io Diagram.`);
+    });
+}
+
+
+if (importDrawioBtn) {
+    importDrawioBtn.addEventListener("click", async () => {
+
+        const file = drawioFile && drawioFile.files
+            ? drawioFile.files[0]
+            : null;
+
+        if (!file) {
+            return showValidation(
+                "error",
+                "Choose a .drawio file before importing."
+            );
+        }
+
+        try {
+
+            importDrawioBtn.disabled = true;
+            importDrawioBtn.textContent = "Importing...";
+
+            const text = await file.text();
+
+            const xmlText = await decodeDrawioFile(text);
+
+            const result = parseDrawioER(xmlText);
+
+            if (!result.entities.length) {
+                throw new Error(
+                    "No ER entities were detected. Use rectangles for entities, ovals for attributes and diamonds for relationships."
+                );
+            }
+
+            entities = result.entities;
+            relationships = result.relationships;
+
+            sqlGenerated = false;
+
+            renderEntities();
+            updateRelationshipSelectors();
+            renderRelationshipList();
+            renderDiagram();
+            updateProgress();
+
+            if (result.warnings.length) {
+                showValidation(
+                    "success",
+                    `Draw.io diagram imported successfully with ${result.warnings.length} note(s). ${result.warnings.join(" ")}`
+                );
+            } else {
+                showValidation(
+                    "success",
+                    `Draw.io diagram imported successfully. ${entities.length} entities and ${relationships.length} relationships detected.`
+                );
+            }
+
+            generateBtn.click();
+
+        } catch (error) {
+
+            console.error("Draw.io import error:", error);
+
+            showValidation(
+                "error",
+                error.message || "Unable to read the Draw.io diagram."
+            );
+
+        } finally {
+
+            importDrawioBtn.disabled = false;
+            importDrawioBtn.textContent = "Import Draw.io Diagram";
+
+        }
+    });
+}
+
+
+/* =========================================================
+   READ DRAW.IO FILE
+========================================================= */
+
+async function decodeDrawioFile(text) {
+
+    const trimmed = text.trim();
+
+    if (!trimmed) {
+        throw new Error("The selected Draw.io file is empty.");
+    }
+
+    if (trimmed.startsWith("<")) {
+        return trimmed;
+    }
+
+    let xmlDocument;
+
+    try {
+        xmlDocument = new DOMParser().parseFromString(
+            trimmed,
+            "application/xml"
+        );
+    } catch {
+        xmlDocument = null;
+    }
+
+    if (
+        xmlDocument &&
+        !xmlDocument.querySelector("parsererror") &&
+        xmlDocument.documentElement
+    ) {
+        const diagrams = xmlDocument.querySelectorAll("diagram");
+
+        if (diagrams.length) {
+
+            const diagramData = diagrams[0].textContent.trim();
+
+            if (!diagramData) {
+                throw new Error("The Draw.io diagram does not contain any diagram data.");
+            }
+
+            if (diagramData.startsWith("<")) {
+                return diagramData;
+            }
+
+            return await decompressDrawioData(diagramData);
+        }
+
+        return trimmed;
+    }
+
+    throw new Error("The selected file is not a valid Draw.io diagram.");
+}
+
+
+/* =========================================================
+   DRAW.IO COMPRESSED DATA SUPPORT
+========================================================= */
+
+async function decompressDrawioData(data) {
+
+    try {
+
+        const binary = atob(data);
+
+        const bytes = new Uint8Array(binary.length);
+
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+
+        if (typeof DecompressionStream === "undefined") {
+            throw new Error(
+                "This browser does not support compressed Draw.io files. Please save the diagram as an uncompressed .drawio file."
+            );
+        }
+
+        let stream;
+
+        try {
+            stream = new DecompressionStream("deflate-raw");
+        } catch {
+            stream = new DecompressionStream("deflate");
+        }
+
+        const decompressedStream = new Blob([bytes])
+            .stream()
+            .pipeThrough(stream);
+
+        const buffer = await new Response(
+            decompressedStream
+        ).arrayBuffer();
+
+        const decoded = new TextDecoder().decode(buffer);
+
+        return decodeURIComponent(decoded);
+
+    } catch (error) {
+
+        try {
+
+            const decoded = decodeURIComponent(
+                escape(atob(data))
+            );
+
+            if (decoded.trim().startsWith("<")) {
+                return decoded;
+            }
+
+        } catch {}
+
+        throw new Error(
+            "The Draw.io file could not be decoded. Please use a standard .drawio file."
+        );
+    }
+}
+
+
+/* =========================================================
+   DRAW.IO XML PARSER
+========================================================= */
+
+function parseDrawioER(xmlText) {
+
+    const parser = new DOMParser();
+
+    const xml = parser.parseFromString(
+        xmlText,
+        "application/xml"
+    );
+
+    const parserError = xml.querySelector("parsererror");
+
+    if (parserError) {
+        throw new Error("The Draw.io XML could not be parsed.");
+    }
+
+    const cells = Array.from(
+        xml.querySelectorAll("mxCell")
+    );
+
+    const vertices = cells.filter(
+        cell => cell.getAttribute("vertex") === "1"
+    );
+
+    const edges = cells.filter(
+        cell => cell.getAttribute("edge") === "1"
+    );
+
+    const nodeMap = new Map();
+
+    vertices.forEach(cell => {
+
+        const id = cell.getAttribute("id");
+
+        if (!id) return;
+
+        const value = cleanDrawioText(
+            cell.getAttribute("value") || ""
+        );
+
+        const style = (
+            cell.getAttribute("style") || ""
+        ).toLowerCase();
+
+        const geometry = cell.querySelector("mxGeometry");
+
+        const node = {
+            id,
+            value,
+            style,
+            geometry,
+            type: detectDrawioShape(style),
+            x: geometry
+                ? parseFloat(geometry.getAttribute("x")) || null
+                : null,
+            y: geometry
+                ? parseFloat(geometry.getAttribute("y")) || null
+                : null
+        };
+
+        nodeMap.set(id, node);
+
+    });
+
+
+    const entityNodes = [];
+
+    const attributeNodes = [];
+
+    const relationshipNodes = [];
+
+
+    nodeMap.forEach(node => {
+
+        if (node.type === "entity") {
+            entityNodes.push(node);
+        }
+
+        if (node.type === "attribute") {
+            attributeNodes.push(node);
+        }
+
+        if (node.type === "relationship") {
+            relationshipNodes.push(node);
+        }
+
+    });
+
+
+    const edgeConnections = edges.map(edge => {
+
+        const source = edge.getAttribute("source");
+        const target = edge.getAttribute("target");
+
+        return {
+            id: edge.getAttribute("id"),
+            source,
+            target,
+            value: cleanDrawioText(
+                edge.getAttribute("value") || ""
+            ),
+            style: (
+                edge.getAttribute("style") || ""
+            ).toLowerCase()
+        };
+
+    });
+
+
+    const connections = new Map();
+
+    nodeMap.forEach(node => {
+        connections.set(node.id, []);
+    });
+
+
+    edgeConnections.forEach(edge => {
+
+        if (
+            nodeMap.has(edge.source) &&
+            nodeMap.has(edge.target)
+        ) {
+
+            connections.get(edge.source).push({
+                ...edge,
+                other: edge.target
+            });
+
+            connections.get(edge.target).push({
+                ...edge,
+                other: edge.source
+            });
+
+        }
+
+    });
+
+
+    const parsedEntities = entityNodes.map((entityNode, entityIndex) => {
+
+        const attributes = [];
+
+        const connected = connections.get(entityNode.id) || [];
+
+        connected.forEach(connection => {
+
+            const other = nodeMap.get(connection.other);
+
+            if (!other || other.type !== "attribute") {
+                return;
+            }
+
+            const attributeName = other.value.trim();
+
+            if (!attributeName) {
+                return;
+            }
+
+            if (
+                !attributes.some(
+                    attribute =>
+                        attribute.name.toLowerCase() ===
+                        attributeName.toLowerCase()
+                )
+            ) {
+
+                attributes.push({
+                    id: `attr_${attributeUid++}`,
+                    name: attributeName,
+                    type: inferDataType(attributeName),
+                    primaryKey: detectPrimaryKey(attributeName),
+                    x: other.x,
+                    y: other.y,
+                    startOffsetX: 0,
+                    startOffsetY: 0,
+                    lineOffsetX: 0,
+                    lineOffsetY: 0,
+                    endOffsetX: 0,
+                    endOffsetY: 0
+                });
+
+            }
+
+        });
+
+
+        const fallbackAttributes = extractInlineAttributes(
+            entityNode.value
+        );
+
+        fallbackAttributes.forEach(attributeName => {
+
+            if (
+                !attributes.some(
+                    attribute =>
+                        attribute.name.toLowerCase() ===
+                        attributeName.toLowerCase()
+                )
+            ) {
+
+                attributes.push({
+                    id: `attr_${attributeUid++}`,
+                    name: attributeName,
+                    type: inferDataType(attributeName),
+                    primaryKey: detectPrimaryKey(attributeName),
+                    x: null,
+                    y: null,
+                    startOffsetX: 0,
+                    startOffsetY: 0,
+                    lineOffsetX: 0,
+                    lineOffsetY: 0,
+                    endOffsetX: 0,
+                    endOffsetY: 0
+                });
+
+            }
+
+        });
+
+
+        return {
+            originalId: entityNode.id,
+            name: entityNode.value || `Entity_${entityIndex + 1}`,
+            attributes,
+            x: entityNode.x,
+            y: entityNode.y
+        };
+
+    });
+
+
+    const warnings = [];
+
+
+    parsedEntities.forEach(entity => {
+
+        if (!entity.attributes.length) {
+
+            warnings.push(
+                `${entity.name} has no connected attributes.`
+            );
+
+        }
+
+        if (
+            entity.attributes.length &&
+            !entity.attributes.some(
+                attribute => attribute.primaryKey
+            )
+        ) {
+
+            const firstAttribute = entity.attributes[0];
+
+            firstAttribute.primaryKey = true;
+
+            warnings.push(
+                `${entity.name} had no detected primary key, so ${firstAttribute.name} was used as the primary key.`
+            );
+
+        }
+
+    });
+
+
+    const parsedRelationships = [];
+
+
+    relationshipNodes.forEach((relationshipNode, index) => {
+
+        const connected = connections.get(
+            relationshipNode.id
+        ) || [];
+
+        const connectedEntities = connected
+            .map(connection => ({
+                connection,
+                node: nodeMap.get(connection.other)
+            }))
+            .filter(item =>
+                item.node &&
+                item.node.type === "entity"
+            );
+
+
+        if (connectedEntities.length < 2) {
+            return;
+        }
+
+
+        const first = connectedEntities[0];
+
+        const second = connectedEntities[1];
+
+
+        const fromEntity = parsedEntities.find(
+            entity =>
+                entity.originalId === first.node.id
+        );
+
+        const toEntity = parsedEntities.find(
+            entity =>
+                entity.originalId === second.node.id
+        );
+
+
+        if (!fromEntity || !toEntity) {
+            return;
+        }
+
+
+        const firstCardinality =
+            detectCardinality(
+                first.connection,
+                relationshipNode,
+                first.node
+            );
+
+        const secondCardinality =
+            detectCardinality(
+                second.connection,
+                relationshipNode,
+                second.node
+            );
+
+
+        const type = convertCardinality(
+            firstCardinality,
+            secondCardinality
+        );
+
+
+        const relationshipAttributes = [];
+
+
+        connected.forEach(connection => {
+
+            const other = nodeMap.get(
+                connection.other
+            );
+
+            if (!other || other.type !== "attribute") {
+                return;
+            }
+
+
+            const attributeName = other.value.trim();
+
+            if (!attributeName) {
+                return;
+            }
+
+
+            if (
+                relationshipAttributes.some(
+                    attribute =>
+                        attribute.name.toLowerCase() ===
+                        attributeName.toLowerCase()
+                )
+            ) {
+                return;
+            }
+
+
+            relationshipAttributes.push({
+
+                id: `rel_attr_${relationshipAttributeUid++}`,
+
+                name: attributeName,
+
+                type: inferDataType(attributeName),
+
+                x: other.x,
+
+                y: other.y,
+
+                startOffsetX: 0,
+
+                startOffsetY: 0,
+
+                lineOffsetX: 0,
+
+                lineOffsetY: 0,
+
+                endOffsetX: 0,
+
+                endOffsetY: 0
+
+            });
+
+        });
+
+
+        let relationshipName =
+            relationshipNode.value.trim();
+
+
+        if (!relationshipName) {
+            relationshipName =
+                `${fromEntity.name}_${toEntity.name}`;
+        }
+
+
+        parsedRelationships.push({
+
+            from: fromEntity.name,
+
+            to: toEntity.name,
+
+            name: relationshipName,
+
+            type,
+
+            attributes: relationshipAttributes,
+
+            x: relationshipNode.x,
+
+            y: relationshipNode.y,
+
+            fromSegStartOffsetX: 0,
+
+            fromSegStartOffsetY: 0,
+
+            fromOffsetX: 0,
+
+            fromOffsetY: 0,
+
+            fromSegEndOffsetX: 0,
+
+            fromSegEndOffsetY: 0,
+
+            toSegStartOffsetX: 0,
+
+            toSegStartOffsetY: 0,
+
+            toOffsetX: 0,
+
+            toOffsetY: 0,
+
+            toSegEndOffsetX: 0,
+
+            toSegEndOffsetY: 0
+
+        });
+
+    });
+
+
+    parseDirectEntityRelationships(
+        edgeConnections,
+        nodeMap,
+        parsedEntities,
+        parsedRelationships
+    );
+
+
+    return {
+
+        entities: parsedEntities.map(entity => {
+
+            const copy = {
+                ...entity
+            };
+
+            delete copy.originalId;
+
+            return copy;
+
+        }),
+
+        relationships: parsedRelationships,
+
+        warnings
+
+    };
+
+}
+
+
+/* =========================================================
+   DRAW.IO SHAPE DETECTION
+========================================================= */
+
+function detectDrawioShape(style) {
+
+    if (!style) {
+        return "entity";
+    }
+
+    if (
+        style.includes("ellipse") ||
+        style.includes("shape=ellipse")
+    ) {
+        return "attribute";
+    }
+
+    if (
+        style.includes("rhombus") ||
+        style.includes("shape=rhombus") ||
+        style.includes("diamond")
+    ) {
+        return "relationship";
+    }
+
+    if (
+        style.includes("rounded=1") &&
+        !style.includes("ellipse")
+    ) {
+        return "entity";
+    }
+
+    if (
+        style.includes("rectangle") ||
+        style.includes("shape=rectangle")
+    ) {
+        return "entity";
+    }
+
+    if (
+        style.includes("swimlane") ||
+        style.includes("table")
+    ) {
+        return "entity";
+    }
+
+    return "entity";
+}
+
+
+/* =========================================================
+   DRAW.IO TEXT CLEANING
+========================================================= */
+
+function cleanDrawioText(value) {
+
+    let text = String(value || "");
+
+    text = text
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/?[^>]+>/g, "")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&#39;/gi, "'")
+        .replace(/&quot;/gi, '"');
+
+    const temp = document.createElement("div");
+    temp.innerHTML = text;
+
+    text = temp.textContent || text;
+
+    return text
+        .replace(/\r/g, "")
+        .split("\n")
+        .map(line => line.trim())
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+
+}
+
+
+/* =========================================================
+   INLINE ATTRIBUTE DETECTION
+========================================================= */
+
+function extractInlineAttributes(value) {
+
+    if (!value) {
+        return [];
+    }
+
+    const text = cleanDrawioText(value);
+
+    if (!text.includes("\n")) {
+        return [];
+    }
+
+    const lines = text
+        .split("\n")
+        .map(line => line.trim())
+        .filter(Boolean);
+
+    if (lines.length < 2) {
+        return [];
+    }
+
+    const attributes = lines.slice(1);
+
+    return attributes.filter(
+        attribute =>
+            attribute.length > 0 &&
+            attribute.length < 100 &&
+            !attribute.includes(":")
+    );
+
+}
+
+
+/* =========================================================
+   CARDINALITY DETECTION
+========================================================= */
+
+function detectCardinality(
+    connection,
+    relationshipNode,
+    entityNode
+) {
+
+    const values = [
+
+        connection.value,
+
+        relationshipNode.value,
+
+        entityNode.value,
+
+        connection.style
+
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+
+    const normalized = values
+        .toUpperCase()
+        .replace(/\s+/g, " ");
+
+
+    if (
+        /\bM\b/.test(normalized) ||
+        /\bMANY\b/.test(normalized) ||
+        /\bN\b/.test(normalized) ||
+        /\bM:N\b/.test(normalized) ||
+        /\bN:1\b/.test(normalized) ||
+        /\b1:N\b/.test(normalized)
+    ) {
+
+        if (
+            /\b1:N\b/.test(normalized) ||
+            /\bN:1\b/.test(normalized)
+        ) {
+            return "N";
+        }
+
+        return "N";
+    }
+
+
+    if (
+        /\b1\b/.test(normalized) ||
+        /\bONE\b/.test(normalized)
+    ) {
+        return "1";
+    }
+
+
+    return "N";
+
+}
+
+
+/* =========================================================
+   CARDINALITY CONVERSION
+========================================================= */
+
+function convertCardinality(first, second) {
+
+    const a = String(first || "1").toUpperCase();
+    const b = String(second || "N").toUpperCase();
+
+
+    if (a === "1" && b === "1") {
+        return "1:1";
+    }
+
+    if (a === "1" && b === "N") {
+        return "1:N";
+    }
+
+    if (a === "N" && b === "1") {
+        return "N:1";
+    }
+
+    return "M:N";
+
+}
+
+
+/* =========================================================
+   DIRECT ENTITY-TO-ENTITY RELATIONSHIPS
+========================================================= */
+
+function parseDirectEntityRelationships(
+    edgeConnections,
+    nodeMap,
+    parsedEntities,
+    parsedRelationships
+) {
+
+    edgeConnections.forEach(edge => {
+
+        const source = nodeMap.get(edge.source);
+        const target = nodeMap.get(edge.target);
+
+        if (!source || !target) {
+            return;
+        }
+
+
+        if (
+            source.type !== "entity" ||
+            target.type !== "entity"
+        ) {
+            return;
+        }
+
+
+        const fromEntity = parsedEntities.find(
+            entity =>
+                entity.originalId === source.id
+        );
+
+        const toEntity = parsedEntities.find(
+            entity =>
+                entity.originalId === target.id
+        );
+
+
+        if (!fromEntity || !toEntity) {
+            return;
+        }
+
+
+        const alreadyExists = parsedRelationships.some(
+            relationship =>
+                (
+                    relationship.from === fromEntity.name &&
+                    relationship.to === toEntity.name
+                ) ||
+                (
+                    relationship.from === toEntity.name &&
+                    relationship.to === fromEntity.name
+                )
+        );
+
+
+        if (alreadyExists) {
+            return;
+        }
+
+
+        let relationshipName =
+            cleanDrawioText(edge.value);
+
+
+        if (!relationshipName) {
+            relationshipName =
+                `${fromEntity.name}_${toEntity.name}`;
+        }
+
+
+        let type = "1:N";
+
+
+        const upper = relationshipName.toUpperCase();
+
+
+        if (upper.includes("M:N")) {
+            type = "M:N";
+        } else if (upper.includes("1:1")) {
+            type = "1:1";
+        } else if (upper.includes("N:1")) {
+            type = "N:1";
+        } else if (upper.includes("1:N")) {
+            type = "1:N";
+        }
+
+
+        parsedRelationships.push({
+
+            from: fromEntity.name,
+
+            to: toEntity.name,
+
+            name: relationshipName,
+
+            type,
+
+            attributes: [],
+
+            x: null,
+
+            y: null,
+
+            fromSegStartOffsetX: 0,
+
+            fromSegStartOffsetY: 0,
+
+            fromOffsetX: 0,
+
+            fromOffsetY: 0,
+
+            fromSegEndOffsetX: 0,
+
+            fromSegEndOffsetY: 0,
+
+            toSegStartOffsetX: 0,
+
+            toSegStartOffsetY: 0,
+
+            toOffsetX: 0,
+
+            toOffsetY: 0,
+
+            toSegEndOffsetX: 0,
+
+            toSegEndOffsetY: 0
+
+        });
+
+    });
+
+}
