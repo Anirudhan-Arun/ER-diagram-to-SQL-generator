@@ -419,11 +419,16 @@ function diamondEdgePoint(cx, cy, halfW, halfH, dx, dy) {
 }
 
 function centerOf(el) {
+    const visual = el.firstElementChild || el;
+
+    const offsetX = visual === el ? 0 : visual.offsetLeft;
+    const offsetY = visual === el ? 0 : visual.offsetTop;
+
     return {
-        x: (parseFloat(el.style.left) || 0) + el.offsetWidth / 2,
-        y: (parseFloat(el.style.top) || 0) + el.offsetHeight / 2,
-        halfW: el.offsetWidth / 2,
-        halfH: el.offsetHeight / 2
+        x: (parseFloat(el.style.left) || 0) + offsetX + visual.offsetWidth / 2,
+        y: (parseFloat(el.style.top) || 0) + offsetY + visual.offsetHeight / 2,
+        halfW: visual.offsetWidth / 2,
+        halfH: visual.offsetHeight / 2
     };
 }
 
