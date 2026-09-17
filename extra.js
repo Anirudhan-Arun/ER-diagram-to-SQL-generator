@@ -547,49 +547,86 @@
        CAPTURE ER DIAGRAM AS IMAGE
        ================================================= */
 
-    async function captureDiagramImage() {
+   async function captureDiagramImage() {
+    const diagramArea = document.getElementById("diagramArea");
+    const canvasEl = diagramArea
+        ? diagramArea.querySelector(".er-canvas")
+        : null;
 
-        const diagramArea =
-            document.getElementById("diagramArea");
-
-        const canvasEl =
-            diagramArea
-                ? diagramArea.querySelector(".er-canvas")
-                : null;
-
-        if (!diagramArea || !canvasEl || typeof html2canvas === "undefined") {
-            return null;
-        }
-
-        try {
-
-            const rendered = await html2canvas(canvasEl, {
-                backgroundColor:
-                    document.body.classList.contains("light")
-                        ? "#ffffff"
-                        : "#0b1020",
-                scale: 2,
-                useCORS: true
-            });
-
-            const dataUrl = rendered.toDataURL("image/jpeg", 0.95);
-
-            return {
-                dataUrl: dataUrl,
-                width: rendered.width,
-                height: rendered.height
-            };
-
-        } catch (error) {
-
-            console.error("ER diagram capture failed:", error);
-            return null;
-
-        }
-
+    if (!diagramArea || !canvasEl || typeof html2canvas === "undefined") {
+        return null;
     }
 
+    const originalZoom = canvasEl.style.zoom;
 
+    try {
+        canvasEl.style.zoom = "1";
+
+        await new Promise(resolve =>
+            requestAnimationFrame(() =>
+                requestAnimationFrame(resolve)
+            )
+        );
+
+        const canvasRect = canvasEl.getBoundingClientRect();
+
+        let left = Infinity;
+        let top = Infinity;
+        let right = -Infinity;
+        let bottom = -Infinity;
+
+        Array.from(canvasEl.children).forEach(element => {
+            if (element === svgLayer) return;
+
+            const rect = element.getBoundingClientRect();
+
+            left = Math.min(left, rect.left - canvasRect.left);
+            top = Math.min(top, rect.top - canvasRect.top);
+            right = Math.max(right, rect.right - canvasRect.left);
+            bottom = Math.max(bottom, rect.bottom - canvasRect.top);
+        });
+
+        if (!isFinite(left)) {
+            return null;
+        }
+
+        const padding = 50;
+
+        left = Math.max(0, left - padding);
+        top = Math.max(0, top - padding);
+        right = Math.min(canvasEl.scrollWidth, right + padding);
+        bottom = Math.min(canvasEl.scrollHeight, bottom + padding);
+
+        const width = right - left;
+        const height = bottom - top;
+
+        const rendered = await html2canvas(canvasEl, {
+            backgroundColor: document.body.classList.contains("light")
+                ? "#ffffff"
+                : "#0b1020",
+            scale: 2,
+            useCORS: true,
+            x: left,
+            y: top,
+            width: width,
+            height: height,
+            scrollX: 0,
+            scrollY: 0
+        });
+
+        return {
+            dataUrl: rendered.toDataURL("image/jpeg", 0.95),
+            width: rendered.width,
+            height: rendered.height
+        };
+
+    } catch (error) {
+        console.error("ER diagram capture failed:", error);
+        return null;
+    } finally {
+        canvasEl.style.zoom = originalZoom;
+    }
+}
     /* =================================================
        TEXT DOWNLOAD
        ================================================= */
