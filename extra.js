@@ -235,7 +235,8 @@
         return {
             entities: [],
             relationships: [],
-            sqlGenerated: false
+            sqlGenerated: false,
+            sqlDialect: "generic"
         };
 
     }
@@ -302,6 +303,13 @@
         lines.push(
             "Relationships entered: " +
             relationships.length
+        );
+
+        lines.push(
+            "SQL Output Format: " +
+            (data.sqlDialect
+                ? data.sqlDialect.toUpperCase()
+                : "GENERIC")
         );
 
         lines.push("");
@@ -453,7 +461,7 @@
         );
 
         lines.push(
-            "Step 7: SQL CREATE TABLE statements were generated."
+            "Step 7: SQL CREATE TABLE statements were generated in the selected SQL dialect."
         );
 
         lines.push("");
@@ -536,6 +544,51 @@
 
 
     /* =================================================
+       CAPTURE ER DIAGRAM AS IMAGE
+       ================================================= */
+
+    async function captureDiagramImage() {
+
+        const diagramArea =
+            document.getElementById("diagramArea");
+
+        const canvasEl =
+            diagramArea
+                ? diagramArea.querySelector(".er-canvas")
+                : null;
+
+        if (!diagramArea || !canvasEl || typeof html2canvas === "undefined") {
+            return null;
+        }
+
+        try {
+
+            const rendered = await html2canvas(canvasEl, {
+                backgroundColor:
+                    document.body.classList.contains("light")
+                        ? "#ffffff"
+                        : "#0b1020",
+                scale: 2,
+                useCORS: true
+            });
+
+            return {
+                dataUrl: rendered.toDataURL("image/png"),
+                width: rendered.width,
+                height: rendered.height
+            };
+
+        } catch (error) {
+
+            console.error("ER diagram capture failed:", error);
+            return null;
+
+        }
+
+    }
+
+
+    /* =================================================
        TEXT DOWNLOAD
        ================================================= */
 
@@ -582,7 +635,7 @@
 
     document
         .getElementById("downloadPdfBtn")
-        .addEventListener("click", () => {
+        .addEventListener("click", async () => {
 
             if (!window.jspdf) {
 
@@ -593,6 +646,13 @@
                 return;
 
             }
+
+            const downloadPdfBtn =
+                document.getElementById("downloadPdfBtn");
+
+            downloadPdfBtn.disabled = true;
+            const originalLabel = downloadPdfBtn.textContent;
+            downloadPdfBtn.textContent = "Generating PDF...";
 
             const {
                 jsPDF
@@ -606,18 +666,80 @@
                 });
 
 
+            const pageWidth =
+                doc.internal.pageSize.width;
+
+            const pageHeight =
+                doc.internal.pageSize.height;
+
+            const marginLeft = 40;
+
+
+            /* =========================================
+               PAGE 1: TITLE + ER DIAGRAM IMAGE
+               ========================================= */
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("ER --> SQL GENERATOR", marginLeft, 50);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text("ER Diagram Visualization", marginLeft, 70);
+
+            const diagramImage = await captureDiagramImage();
+
+            if (diagramImage) {
+
+                const maxWidth = pageWidth - marginLeft * 2;
+                const maxHeight = pageHeight - 110;
+
+                let renderWidth = diagramImage.width;
+                let renderHeight = diagramImage.height;
+
+                const scale = Math.min(
+                    maxWidth / renderWidth,
+                    maxHeight / renderHeight,
+                    1
+                );
+
+                renderWidth *= scale;
+                renderHeight *= scale;
+
+                doc.addImage(
+                    diagramImage.dataUrl,
+                    "PNG",
+                    marginLeft,
+                    90,
+                    renderWidth,
+                    renderHeight
+                );
+
+            } else {
+
+                doc.setFontSize(10);
+                doc.text(
+                    "ER diagram could not be captured for this report.",
+                    marginLeft,
+                    100
+                );
+
+            }
+
+            doc.addPage();
+
+
+            /* =========================================
+               TEXT REPORT (unchanged logic)
+               ========================================= */
+
             const text =
                 buildReportText();
 
 
-            const marginLeft = 40;
-
             let y = 50;
 
             const lineHeight = 13;
-
-            const pageHeight =
-                doc.internal.pageSize.height;
 
 
             doc.setFont(
@@ -663,6 +785,9 @@
                 "er-sql-execution-report.pdf"
             );
 
+
+            downloadPdfBtn.disabled = false;
+            downloadPdfBtn.textContent = originalLabel;
 
             overlay.classList.remove("open");
 
