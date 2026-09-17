@@ -572,8 +572,10 @@
                 useCORS: true
             });
 
+            const dataUrl = rendered.toDataURL("image/jpeg", 0.95);
+
             return {
-                dataUrl: rendered.toDataURL("image/png"),
+                dataUrl: dataUrl,
                 width: rendered.width,
                 height: rendered.height
             };
@@ -708,7 +710,7 @@
 
                 doc.addImage(
                     diagramImage.dataUrl,
-                    "PNG",
+                    "JPEG",
                     marginLeft,
                     90,
                     renderWidth,
