@@ -1619,3 +1619,26 @@ body.dark .drawio-file-label {
     }
 
 }
+
+/* SQL HEADER ACTIONS (output format + copy button) */
+.sql-header-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+.dialect-label{
+    font-size:11px;
+    font-weight:600;
+    color:var(--muted);
+    white-space:nowrap;
+}
+.sql-header-actions .example-select{
+    width:auto;
+    min-width:170px;
+    padding:9px 12px;
+    font-size:12px;
+}
+body.light .dialect-label{
+    color:#536176;
+}
