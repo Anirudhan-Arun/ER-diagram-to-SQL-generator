@@ -1141,9 +1141,46 @@ function getCardinalities(type) {
     return { from: "", to: "" };
 }
 
-function sqlType(type) {
-    if (type === "VARCHAR") return "VARCHAR(100)";
-    return type;
+/* =========================================================
+   SQL DIALECT SUPPORT
+========================================================= */
+
+let currentSqlDialect = "generic";
+
+const dialectTypeMaps = {
+    generic: {
+        INTEGER: "INTEGER",
+        VARCHAR: "VARCHAR(100)",
+        DECIMAL: "DECIMAL(10,2)",
+        DATE: "DATE",
+        BOOLEAN: "BOOLEAN"
+    },
+    mysql: {
+        INTEGER: "INT",
+        VARCHAR: "VARCHAR(100)",
+        DECIMAL: "DECIMAL(10,2)",
+        DATE: "DATE",
+        BOOLEAN: "TINYINT(1)"
+    },
+    postgresql: {
+        INTEGER: "INTEGER",
+        VARCHAR: "VARCHAR(100)",
+        DECIMAL: "NUMERIC(10,2)",
+        DATE: "DATE",
+        BOOLEAN: "BOOLEAN"
+    },
+    oracle: {
+        INTEGER: "NUMBER(10)",
+        VARCHAR: "VARCHAR2(100)",
+        DECIMAL: "NUMBER(10,2)",
+        DATE: "DATE",
+        BOOLEAN: "NUMBER(1)"
+    }
+};
+
+function sqlType(type, dialect = currentSqlDialect) {
+    const map = dialectTypeMaps[dialect] || dialectTypeMaps.generic;
+    return map[type] || type;
 }
 
 function getRelationshipForeignKey(relationship, from, to) {
@@ -1402,6 +1439,18 @@ updateRelationshipSelectors();
 renderEntities();
 renderRelationshipList();
 updateProgress();
+
+const sqlDialectSelect = document.getElementById("sqlDialectSelect");
+
+if (sqlDialectSelect) {
+    sqlDialectSelect.addEventListener("change", () => {
+        currentSqlDialect = sqlDialectSelect.value;
+
+        if (sqlGenerated) {
+            generateBtn.click();
+        }
+    });
+}
 /* =========================================================
    EXTRA PROJECT DATA ACCESS
    ========================================================= */
@@ -1410,7 +1459,8 @@ window.getERGeneratorData = function () {
     return {
         entities: JSON.parse(JSON.stringify(entities)),
         relationships: JSON.parse(JSON.stringify(relationships)),
-        sqlGenerated: sqlGenerated
+        sqlGenerated: sqlGenerated,
+        sqlDialect: currentSqlDialect
     };
 };
 /* =========================================================
