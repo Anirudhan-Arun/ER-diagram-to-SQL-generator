@@ -576,7 +576,10 @@
         let bottom = -Infinity;
 
         Array.from(canvasEl.children).forEach(element => {
-            
+
+            if (element.classList.contains("relationship-svg")) {
+                return;
+            }
 
             const rect = element.getBoundingClientRect();
 
