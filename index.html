@@ -386,16 +386,28 @@
    <p>SQL statements generated from your ER model.</p>
   </div>
 
-  <button id="copyBtn" class="secondary-btn">
-   Copy SQL
-  </button>
+  <div class="sql-header-actions">
+
+   <label for="sqlDialectSelect" class="dialect-label">Output Format</label>
+
+   <select id="sqlDialectSelect" class="example-select">
+    <option value="generic">Standard SQL (Generic)</option>
+    <option value="mysql">MySQL</option>
+    <option value="postgresql">PostgreSQL</option>
+    <option value="oracle">Oracle</option>
+   </select>
+
+   <button id="copyBtn" class="secondary-btn">
+    Copy SQL
+   </button>
+
+  </div>
 
  </div>
 
  <pre id="sqlOutput"><code>-- Generated SQL will appear here.</code></pre>
 
 </section>
-
 </div>
 
 
@@ -829,6 +841,7 @@
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="script.js"></script>
 <script src="extra.js"></script>
 
