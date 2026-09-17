@@ -576,7 +576,7 @@
         let bottom = -Infinity;
 
         Array.from(canvasEl.children).forEach(element => {
-            if (element === svgLayer) return;
+            
 
             const rect = element.getBoundingClientRect();
 
