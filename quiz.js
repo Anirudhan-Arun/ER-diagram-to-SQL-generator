@@ -2,6 +2,10 @@
    QUIZ MODULE (ER Diagram + SQL)
    Fully self-contained. Does not touch entities/relationships
    or any globals used by script.js / extra.js.
+
+   - Practice Quiz  = real scored quiz (unchanged behaviour)
+   - Competitive Exams = plain browsable question bank
+                          (no scoring, no submit, no retry)
    ========================================================= */
 
 (function () {
@@ -241,7 +245,7 @@
 
 
     /* ---------------------------------------------------
-       QUESTION BANK — Competitive Exams
+       QUESTION BANK — Competitive Exams (browsable, not scored)
        Original practice questions, tagged with an
        illustrative exam name + year (NOT verbatim past
        papers — see disclaimer in the UI).
@@ -250,127 +254,77 @@
     const examBank = [
         { exam: "GATE", year: 2023,
           q: "A relation R(A,B,C,D) has functional dependency A → B, A → C, A → D. What is the highest normal form R is guaranteed to satisfy given A is the only candidate key?",
-          options: ["1NF only", "2NF", "3NF and possibly BCNF", "It cannot be normalized"],
-          correct: 2,
+          answer: "3NF and possibly BCNF",
           explain: "Since A is the sole candidate key and every other attribute depends directly on A (no partial or transitive dependency), R satisfies 2NF and 3NF, and BCNF as well since A is the only determinant." },
 
         { exam: "GATE", year: 2022,
           q: "Which of the following correctly describes a candidate key?",
-          options: [
-            "Any column that contains only unique values, even if redundant",
-            "A minimal set of attributes that can uniquely identify a tuple in a relation",
-            "A key that must always be an auto-incrementing integer",
-            "A key used only in foreign key constraints"
-          ],
-          correct: 1,
+          answer: "A minimal set of attributes that can uniquely identify a tuple in a relation",
           explain: "A candidate key is a minimal super key — a set of attributes that uniquely identifies each tuple, with no redundant attribute in the set." },
 
         { exam: "GATE", year: 2021,
           q: "When mapping an ER diagram with a 1:1 relationship where one entity has total participation and the other has partial participation, where should the foreign key ideally be placed?",
-          options: [
-            "On the entity with total participation",
-            "On the entity with partial participation",
-            "On both entities",
-            "A junction table is mandatory"
-          ],
-          correct: 0,
+          answer: "On the entity with total participation",
           explain: "Placing the foreign key on the side with total participation avoids NULL foreign key values, since every row on that side is guaranteed to have a matching related row." },
 
         { exam: "TANCET", year: 2023,
           q: "Which SQL statement correctly returns the second highest salary from an Employee table (standard SQL)?",
-          options: [
-            "SELECT MAX(salary) FROM Employee;",
-            "SELECT salary FROM Employee ORDER BY salary DESC LIMIT 1 OFFSET 1;",
-            "SELECT MIN(salary) FROM Employee;",
-            "SELECT salary FROM Employee WHERE salary = MAX(salary);"
-          ],
-          correct: 1,
+          answer: "SELECT salary FROM Employee ORDER BY salary DESC LIMIT 1 OFFSET 1;",
           explain: "Ordering salaries descending and skipping the first row (OFFSET 1) with LIMIT 1 gives the second-highest value." },
 
         { exam: "TANCET", year: 2022,
           q: "In an ER diagram, a double-lined rectangle represents:",
-          options: ["A strong entity", "A weak entity", "A derived attribute", "A relationship"],
-          correct: 1,
+          answer: "A weak entity",
           explain: "A weak entity, which depends on a strong (owner) entity for its identification, is drawn as a double-lined rectangle." },
 
         { exam: "TANCET", year: 2021,
           q: "Normalization is primarily used to:",
-          options: [
-            "Increase data redundancy for faster reads",
-            "Reduce data redundancy and avoid update/insert/delete anomalies",
-            "Encrypt the database",
-            "Convert SQL to NoSQL"
-          ],
-          correct: 1,
+          answer: "Reduce data redundancy and avoid update/insert/delete anomalies",
           explain: "Normalization organizes columns and tables to minimize data redundancy and prevent anomalies during insert, update, and delete operations." },
 
         { exam: "PSU", year: 2023,
           q: "Which set of properties (ACID) guarantees that a transaction is either fully completed or fully rolled back?",
-          options: ["Isolation", "Atomicity", "Durability", "Consistency"],
-          correct: 1,
+          answer: "Atomicity",
           explain: "Atomicity ensures a transaction is treated as a single indivisible unit — it either commits completely or has no effect at all." },
 
         { exam: "PSU", year: 2022,
           q: "Which JOIN returns only the rows that have matching values in both tables?",
-          options: ["LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "FULL OUTER JOIN"],
-          correct: 2,
+          answer: "INNER JOIN",
           explain: "INNER JOIN returns only rows where the join condition is satisfied in both tables." },
 
         { exam: "PSU", year: 2021,
           q: "What does the SQL constraint 'NOT NULL' enforce on a column?",
-          options: [
-            "The column must contain unique values",
-            "The column cannot store an empty/undefined value",
-            "The column must be a foreign key",
-            "The column is automatically indexed"
-          ],
-          correct: 1,
+          answer: "The column cannot store an empty/undefined value",
           explain: "NOT NULL simply requires that the column always has some value — it disallows NULL entries." },
 
         { exam: "DRDO", year: 2023,
           q: "Which relational algebra operation is used to combine tuples from two relations based on a common attribute?",
-          options: ["Selection (σ)", "Projection (π)", "Join (⋈)", "Union (∪)"],
-          correct: 2,
+          answer: "Join (⋈)",
           explain: "The Join operation (⋈) combines related tuples from two relations, typically based on a common attribute value, similar to SQL's JOIN." },
 
         { exam: "DRDO", year: 2022,
           q: "Which SQL constraint ensures a foreign key value must exist as a primary key in the referenced table?",
-          options: ["CHECK", "UNIQUE", "FOREIGN KEY ... REFERENCES", "DEFAULT"],
-          correct: 2,
+          answer: "FOREIGN KEY ... REFERENCES",
           explain: "The FOREIGN KEY ... REFERENCES constraint enforces that values in the referencing column must match existing primary key values in the referenced table." },
 
         { exam: "DRDO", year: 2021,
           q: "What is the main purpose of an index in a database table?",
-          options: [
-            "To enforce referential integrity",
-            "To speed up data retrieval at the cost of some extra storage and slower writes",
-            "To automatically normalize the table",
-            "To encrypt sensitive columns"
-          ],
-          correct: 1,
+          answer: "To speed up data retrieval at the cost of some extra storage and slower writes",
           explain: "An index creates a fast lookup structure for a column (or columns), significantly speeding up SELECT queries, though it adds storage overhead and slightly slows INSERT/UPDATE/DELETE." },
 
         { exam: "BHEL", year: 2023,
           q: "In ER notation, an attribute that itself has sub-attributes (e.g. Address made of Street, City, Pincode) is called:",
-          options: ["A derived attribute", "A composite attribute", "A multivalued attribute", "A key attribute"],
-          correct: 1,
+          answer: "A composite attribute",
           explain: "A composite attribute can be broken down into smaller sub-parts, each of which is itself a simple attribute — e.g. Address splitting into Street, City, Pincode." },
 
         { exam: "BHEL", year: 2022,
           q: "Which SQL aggregate function returns the number of rows matching a condition?",
-          options: ["SUM()", "AVG()", "COUNT()", "MAX()"],
-          correct: 2,
+          answer: "COUNT()",
           explain: "COUNT() returns the number of rows (or non-NULL values in a column) that match the query." },
 
         { exam: "BHEL", year: 2021,
           q: "What happens to related child rows by default if a parent row is deleted and a foreign key has 'ON DELETE CASCADE'?",
-          options: [
-            "Nothing happens to child rows",
-            "The delete is blocked entirely",
-            "All matching child rows are automatically deleted too",
-            "Child rows are moved to a new table"
-          ],
-          correct: 2,
+          answer: "All matching child rows are automatically deleted too",
           explain: "ON DELETE CASCADE automatically deletes all child rows that reference the deleted parent row, keeping referential integrity intact." }
     ];
 
@@ -381,26 +335,26 @@
 
     const quizModePracticeBtn = document.getElementById("quizModePracticeBtn");
     const quizModeExamBtn = document.getElementById("quizModeExamBtn");
+
     const practiceSetup = document.getElementById("practiceSetup");
-    const examSetup = document.getElementById("examSetup");
+    const quizContainer = document.getElementById("quizContainer");
+    const quizScoreboard = document.getElementById("quizScoreboard");
 
     const quizDifficulty = document.getElementById("quizDifficulty");
     const quizCount = document.getElementById("quizCount");
     const quizCountHint = document.getElementById("quizCountHint");
     const startQuizBtn = document.getElementById("startQuizBtn");
 
-    const examSelect = document.getElementById("examSelect");
-    const examCount = document.getElementById("examCount");
-    const examCountHint = document.getElementById("examCountHint");
-    const startExamBtn = document.getElementById("startExamBtn");
-
-    const quizContainer = document.getElementById("quizContainer");
-    const quizScoreboard = document.getElementById("quizScoreboard");
+    const examBankSetup = document.getElementById("examBankSetup");
+    const examBankFilter = document.getElementById("examBankFilter");
+    const examBankSearch = document.getElementById("examBankSearch");
+    const examBankHint = document.getElementById("examBankHint");
+    const examBankList = document.getElementById("examBankList");
 
     // If the quiz section isn't on this page for some reason, bail safely.
-    if (!quizContainer) return;
+    if (!quizContainer || !examBankList) return;
 
-    let activeQuestions = [];   // currently running set of questions
+    let activeQuestions = [];        // currently running practice quiz set
     let correctlySolved = new Set(); // indices (within activeQuestions) solved correctly
 
 
@@ -411,22 +365,34 @@
     quizModePracticeBtn.addEventListener("click", () => {
         quizModePracticeBtn.classList.add("active");
         quizModeExamBtn.classList.remove("active");
+
         practiceSetup.style.display = "";
-        examSetup.style.display = "none";
+        quizContainer.style.display = "";
+
+        examBankSetup.style.display = "none";
+        examBankList.style.display = "none";
+
         clearQuizArea();
     });
 
     quizModeExamBtn.addEventListener("click", () => {
         quizModeExamBtn.classList.add("active");
         quizModePracticeBtn.classList.remove("active");
-        examSetup.style.display = "";
+
+        examBankSetup.style.display = "";
+        examBankList.style.display = "";
+
         practiceSetup.style.display = "none";
-        clearQuizArea();
+        quizContainer.style.display = "none";
+        quizScoreboard.style.display = "none";
+        quizScoreboard.innerHTML = "";
+
+        renderExamBank();
     });
 
 
     /* ---------------------------------------------------
-       HINTS (how many questions are available)
+       HINT (how many practice questions are available)
        --------------------------------------------------- */
 
     function updatePracticeHint() {
@@ -437,19 +403,8 @@
         if (parseInt(quizCount.value, 10) > available) quizCount.value = available;
     }
 
-    function updateExamHint() {
-        const exam = examSelect.value;
-        const pool = exam === "ALL" ? examBank : examBank.filter(q => q.exam === exam);
-        examCountHint.textContent = `${pool.length} question(s) available for this selection.`;
-        examCount.max = pool.length;
-        if (parseInt(examCount.value, 10) > pool.length) examCount.value = pool.length;
-    }
-
     quizDifficulty.addEventListener("change", updatePracticeHint);
-    examSelect.addEventListener("change", updateExamHint);
-
     updatePracticeHint();
-    updateExamHint();
 
 
     /* ---------------------------------------------------
@@ -465,9 +420,18 @@
         return copy;
     }
 
+    function escapeHTML(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
 
     /* ---------------------------------------------------
-       START PRACTICE QUIZ
+       START PRACTICE QUIZ (scored, with retry)
        --------------------------------------------------- */
 
     startQuizBtn.addEventListener("click", () => {
@@ -483,50 +447,15 @@
             return;
         }
 
-        activeQuestions = shuffle(pool).slice(0, count).map(q => ({ ...q, tag: null }));
+        activeQuestions = shuffle(pool).slice(0, count);
         correctlySolved = new Set();
         renderQuiz();
     });
 
 
     /* ---------------------------------------------------
-       START EXAM SET
+       RENDER PRACTICE QUIZ QUESTIONS
        --------------------------------------------------- */
-
-    startExamBtn.addEventListener("click", () => {
-        const exam = examSelect.value;
-        const pool = exam === "ALL" ? examBank : examBank.filter(q => q.exam === exam);
-
-        let count = parseInt(examCount.value, 10);
-        if (!count || count < 1) count = 1;
-        if (count > pool.length) count = pool.length;
-
-        if (pool.length === 0) {
-            quizContainer.innerHTML = `<div class="empty-state">No questions available for this exam.</div>`;
-            return;
-        }
-
-        activeQuestions = shuffle(pool).slice(0, count).map(q => ({
-            ...q,
-            tag: `${q.exam} ${q.year}`
-        }));
-        correctlySolved = new Set();
-        renderQuiz();
-    });
-
-
-    /* ---------------------------------------------------
-       RENDER QUIZ QUESTIONS
-       --------------------------------------------------- */
-
-    function escapeHTML(value) {
-        return String(value)
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
-    }
 
     function renderQuiz() {
         quizScoreboard.style.display = "none";
@@ -540,10 +469,6 @@
             card.className = "quiz-question-card";
             card.id = `quiz-q-${index}`;
 
-            const tagHTML = question.tag
-                ? `<span class="quiz-exam-tag">${escapeHTML(question.tag)}</span>`
-                : "";
-
             const optionsHTML = question.options.map((opt, optIndex) => `
                 <label class="quiz-option-label">
                     <input type="radio" name="quiz-q-${index}-options" value="${optIndex}">
@@ -554,7 +479,6 @@
             card.innerHTML = `
                 <div class="quiz-question-header">
                     <span class="quiz-question-number">Q${index + 1}.</span>
-                    ${tagHTML}
                 </div>
                 <p class="quiz-question-text">${escapeHTML(question.q)}</p>
                 <div class="quiz-options">${optionsHTML}</div>
@@ -621,7 +545,7 @@
 
 
     /* ---------------------------------------------------
-       SCOREBOARD
+       SCOREBOARD (Practice Quiz only)
        --------------------------------------------------- */
 
     function showScoreboard() {
@@ -657,7 +581,7 @@
 
 
     /* ---------------------------------------------------
-       CLEAR
+       CLEAR (Practice Quiz only)
        --------------------------------------------------- */
 
     function clearQuizArea() {
@@ -667,5 +591,72 @@
         activeQuestions = [];
         correctlySolved = new Set();
     }
+
+
+    /* =====================================================
+       COMPETITIVE EXAMS — PLAIN QUESTION BANK
+       (no scoring, no submit button, no retry — just browse)
+       ===================================================== */
+
+    function getFilteredExamQuestions() {
+        const examFilter = examBankFilter.value;
+        const searchTerm = examBankSearch.value.trim().toLowerCase();
+
+        return examBank.filter(item => {
+            const matchesExam = examFilter === "ALL" || item.exam === examFilter;
+            const matchesSearch = !searchTerm ||
+                item.q.toLowerCase().includes(searchTerm) ||
+                item.answer.toLowerCase().includes(searchTerm) ||
+                item.explain.toLowerCase().includes(searchTerm);
+            return matchesExam && matchesSearch;
+        });
+    }
+
+    function renderExamBank() {
+        const filtered = getFilteredExamQuestions();
+
+        examBankHint.textContent = `${filtered.length} question(s) in the bank.`;
+
+        if (filtered.length === 0) {
+            examBankList.innerHTML = `<div class="empty-state">No questions match this filter/search.</div>`;
+            return;
+        }
+
+        examBankList.innerHTML = "";
+
+        filtered.forEach((item, index) => {
+
+            const card = document.createElement("div");
+            card.className = "exam-bank-card";
+
+            card.innerHTML = `
+                <div class="quiz-question-header">
+                    <span class="quiz-question-number">Q${index + 1}.</span>
+                    <span class="quiz-exam-tag">${escapeHTML(item.exam)} ${escapeHTML(String(item.year))}</span>
+                </div>
+                <p class="quiz-question-text">${escapeHTML(item.q)}</p>
+                <button class="exam-bank-toggle-btn secondary-btn" type="button">Show Answer & Explanation</button>
+                <div class="exam-bank-answer" style="display:none;">
+                    <p><strong>Answer:</strong> ${escapeHTML(item.answer)}</p>
+                    <p>${escapeHTML(item.explain)}</p>
+                </div>
+            `;
+
+            examBankList.appendChild(card);
+
+            const toggleBtn = card.querySelector(".exam-bank-toggle-btn");
+            const answerBox = card.querySelector(".exam-bank-answer");
+
+            toggleBtn.addEventListener("click", () => {
+                const isOpen = answerBox.style.display === "block";
+                answerBox.style.display = isOpen ? "none" : "block";
+                toggleBtn.textContent = isOpen ? "Show Answer & Explanation" : "Hide Answer & Explanation";
+            });
+
+        });
+    }
+
+    examBankFilter.addEventListener("change", renderExamBank);
+    examBankSearch.addEventListener("input", renderExamBank);
 
 })();
