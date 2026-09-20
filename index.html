@@ -14,6 +14,7 @@
  <nav class="main-nav" aria-label="Main navigation">
   <button class="nav-btn active" data-view="dashboardView">Dashboard</button>
   <button class="nav-btn" data-view="learnView">Learn</button>
+  <button class="nav-btn" data-view="quizView">Quiz</button>
   <button class="nav-btn" data-view="developedByView">Developed By</button>
   <button class="nav-btn" data-view="helpView">Help</button>
  </nav>
@@ -386,28 +387,16 @@
    <p>SQL statements generated from your ER model.</p>
   </div>
 
-  <div class="sql-header-actions">
-
-   <label for="sqlDialectSelect" class="dialect-label">Output Format</label>
-
-   <select id="sqlDialectSelect" class="example-select">
-    <option value="generic">Standard SQL (Generic)</option>
-    <option value="mysql">MySQL</option>
-    <option value="postgresql">PostgreSQL</option>
-    <option value="oracle">Oracle</option>
-   </select>
-
-   <button id="copyBtn" class="secondary-btn">
-    Copy SQL
-   </button>
-
-  </div>
+  <button id="copyBtn" class="secondary-btn">
+   Copy SQL
+  </button>
 
  </div>
 
  <pre id="sqlOutput"><code>-- Generated SQL will appear here.</code></pre>
 
 </section>
+
 </div>
 
 
@@ -557,6 +546,91 @@
 
   </div>
  </div>
+
+</section>
+
+</div>
+
+
+<div id="quizView" class="view">
+
+<section class="panel info-page quiz-page">
+
+ <div class="panel-title">
+  <div>
+   <h2>ER Diagram & SQL Quiz</h2>
+   <p>Practice quizzes and competitive-exam style questions on ER modeling and SQL.</p>
+  </div>
+ </div>
+
+ <div class="quiz-mode-toggle">
+  <button id="quizModePracticeBtn" class="quiz-mode-btn active" type="button">Practice Quiz</button>
+  <button id="quizModeExamBtn" class="quiz-mode-btn" type="button">Competitive Exams</button>
+ </div>
+
+ <div id="practiceSetup" class="quiz-setup">
+
+  <div class="quiz-setup-row">
+
+   <div class="quiz-setup-field">
+    <label>Difficulty</label>
+    <select id="quizDifficulty">
+     <option value="easy">Easy</option>
+     <option value="medium">Medium</option>
+     <option value="hard">Hard</option>
+    </select>
+   </div>
+
+   <div class="quiz-setup-field">
+    <label>Number of Questions</label>
+    <input type="number" id="quizCount" min="1" value="5">
+    <small id="quizCountHint" class="quiz-hint"></small>
+   </div>
+
+  </div>
+
+  <button id="startQuizBtn" class="primary-btn" type="button">Start Quiz</button>
+
+ </div>
+
+ <div id="examSetup" class="quiz-setup" style="display:none;">
+
+  <div class="quiz-setup-row">
+
+   <div class="quiz-setup-field">
+    <label>Exam</label>
+    <select id="examSelect">
+     <option value="ALL">All Exams</option>
+     <option value="GATE">GATE</option>
+     <option value="TANCET">TANCET</option>
+     <option value="PSU">PSU</option>
+     <option value="DRDO">DRDO</option>
+     <option value="BHEL">BHEL</option>
+    </select>
+   </div>
+
+   <div class="quiz-setup-field">
+    <label>Number of Questions</label>
+    <input type="number" id="examCount" min="1" value="5">
+    <small id="examCountHint" class="quiz-hint"></small>
+   </div>
+
+  </div>
+
+  <button id="startExamBtn" class="primary-btn" type="button">Start Exam Set</button>
+
+  <p class="quiz-disclaimer">
+   These are original practice questions written in the style of each
+   exam's DBMS / ER-SQL section, tagged with an illustrative exam name
+   and year. They are not verbatim reproductions of official past
+   papers — always cross-check against official sources before an exam.
+  </p>
+
+ </div>
+
+ <div id="quizContainer" class="quiz-container"></div>
+
+ <div id="quizScoreboard" class="quiz-scoreboard" style="display:none;"></div>
 
 </section>
 
@@ -841,9 +915,9 @@
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="script.js"></script>
 <script src="extra.js"></script>
+<script src="quiz.js"></script>
 
 </body>
 </html>
