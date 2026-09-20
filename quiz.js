@@ -3,16 +3,12 @@
    Fully self-contained. Does not touch entities/relationships
    or any globals used by script.js / extra.js.
 
-   - Practice Quiz  = real scored quiz (unchanged behaviour)
+   - Practice Quiz  = real scored quiz
    - Competitive Exams = plain browsable question bank
                           (no scoring, no submit, no retry)
    ========================================================= */
 
 (function () {
-
-    /* ---------------------------------------------------
-       QUESTION BANK — Practice Quiz (Easy / Medium / Hard)
-       --------------------------------------------------- */
 
     const practiceBank = {
 
@@ -244,13 +240,6 @@
     };
 
 
-    /* ---------------------------------------------------
-       QUESTION BANK — Competitive Exams (browsable, not scored)
-       Original practice questions, tagged with an
-       illustrative exam name + year (NOT verbatim past
-       papers — see disclaimer in the UI).
-       --------------------------------------------------- */
-
     const examBank = [
         { exam: "GATE", year: 2023,
           q: "A relation R(A,B,C,D) has functional dependency A → B, A → C, A → D. What is the highest normal form R is guaranteed to satisfy given A is the only candidate key?",
@@ -329,10 +318,6 @@
     ];
 
 
-    /* ---------------------------------------------------
-       DOM REFERENCES
-       --------------------------------------------------- */
-
     const quizModePracticeBtn = document.getElementById("quizModePracticeBtn");
     const quizModeExamBtn = document.getElementById("quizModeExamBtn");
 
@@ -351,16 +336,11 @@
     const examBankHint = document.getElementById("examBankHint");
     const examBankList = document.getElementById("examBankList");
 
-    // If the quiz section isn't on this page for some reason, bail safely.
     if (!quizContainer || !examBankList) return;
 
-    let activeQuestions = [];        // currently running practice quiz set
-    let correctlySolved = new Set(); // indices (within activeQuestions) solved correctly
+    let activeQuestions = [];
+    let correctlySolved = new Set();
 
-
-    /* ---------------------------------------------------
-       MODE TOGGLE
-       --------------------------------------------------- */
 
     quizModePracticeBtn.addEventListener("click", () => {
         quizModePracticeBtn.classList.add("active");
@@ -391,10 +371,6 @@
     });
 
 
-    /* ---------------------------------------------------
-       HINT (how many practice questions are available)
-       --------------------------------------------------- */
-
     function updatePracticeHint() {
         const diff = quizDifficulty.value;
         const available = practiceBank[diff] ? practiceBank[diff].length : 0;
@@ -406,10 +382,6 @@
     quizDifficulty.addEventListener("change", updatePracticeHint);
     updatePracticeHint();
 
-
-    /* ---------------------------------------------------
-       SHUFFLE HELPER
-       --------------------------------------------------- */
 
     function shuffle(array) {
         const copy = array.slice();
@@ -430,10 +402,6 @@
     }
 
 
-    /* ---------------------------------------------------
-       START PRACTICE QUIZ (scored, with retry)
-       --------------------------------------------------- */
-
     startQuizBtn.addEventListener("click", () => {
         const diff = quizDifficulty.value;
         const pool = practiceBank[diff] || [];
@@ -452,10 +420,6 @@
         renderQuiz();
     });
 
-
-    /* ---------------------------------------------------
-       RENDER PRACTICE QUIZ QUESTIONS
-       --------------------------------------------------- */
 
     function renderQuiz() {
         quizScoreboard.style.display = "none";
@@ -515,14 +479,12 @@
                         <p>${escapeHTML(question.explain)}</p>
                     `;
 
-                    // Lock the question once correct
                     card.querySelectorAll("input[type=radio]").forEach(input => input.disabled = true);
                     submitBtn.disabled = true;
                     submitBtn.textContent = "Answered";
 
                 } else {
 
-                    // Wrong answer: don't reveal it's wrong, allow retry
                     feedbackBox.style.display = "block";
                     feedbackBox.className = "quiz-feedback quiz-feedback-wrong";
                     feedbackBox.innerHTML = `<strong>You're yet to get the answer. Try again!</strong>`;
@@ -533,7 +495,6 @@
 
         });
 
-        // Finish button at the bottom
         const finishBtn = document.createElement("button");
         finishBtn.type = "button";
         finishBtn.className = "quiz-finish-btn primary-btn";
@@ -543,10 +504,6 @@
         quizContainer.appendChild(finishBtn);
     }
 
-
-    /* ---------------------------------------------------
-       SCOREBOARD (Practice Quiz only)
-       --------------------------------------------------- */
 
     function showScoreboard() {
         const total = activeQuestions.length;
@@ -580,10 +537,6 @@
     }
 
 
-    /* ---------------------------------------------------
-       CLEAR (Practice Quiz only)
-       --------------------------------------------------- */
-
     function clearQuizArea() {
         quizContainer.innerHTML = "";
         quizScoreboard.style.display = "none";
@@ -592,11 +545,6 @@
         correctlySolved = new Set();
     }
 
-
-    /* =====================================================
-       COMPETITIVE EXAMS — PLAIN QUESTION BANK
-       (no scoring, no submit button, no retry — just browse)
-       ===================================================== */
 
     function getFilteredExamQuestions() {
         const examFilter = examBankFilter.value;
