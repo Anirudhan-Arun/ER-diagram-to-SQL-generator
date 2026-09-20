@@ -1888,3 +1888,45 @@ body.light .quiz-setup-field input{
 .quiz-score-item-text{
  color:var(--muted);
 }
+/* ============================
+   COMPETITIVE EXAM QUESTION BANK
+   ============================ */
+
+.exam-bank-list{
+ display:flex;
+ flex-direction:column;
+ gap:14px;
+}
+
+.exam-bank-card{
+ background:var(--panel-light);
+ border:1px solid var(--border);
+ border-radius:12px;
+ padding:18px;
+}
+
+.exam-bank-toggle-btn{
+ margin-top:6px;
+ font-size:12px;
+ padding:9px 16px;
+}
+
+.exam-bank-answer{
+ margin-top:14px;
+ padding:14px;
+ border-left:3px solid var(--success);
+ background:rgba(56,211,159,.08);
+ border-radius:0 8px 8px 0;
+}
+
+.exam-bank-answer p{
+ margin:0 0 8px;
+ font-size:13px;
+ line-height:1.6;
+ color:var(--text);
+}
+
+.exam-bank-answer p:last-child{
+ margin-bottom:0;
+ color:var(--muted);
+}
