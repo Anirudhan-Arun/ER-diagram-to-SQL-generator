@@ -76,7 +76,42 @@
                 "The first column in every table"
               ],
               correct: 1,
-              explain: "A foreign key is a column (or set of columns) in one table that references the primary key of another table, enforcing a link between the two." }
+              explain: "A foreign key is a column (or set of columns) in one table that references the primary key of another table, enforcing a link between the two." },
+
+            { q: "Which SQL command is used to create a new table?",
+              options: ["CREATE TABLE", "MAKE TABLE", "NEW TABLE", "BUILD TABLE"],
+              correct: 0,
+              explain: "CREATE TABLE defines a new table along with its columns, data types and constraints." },
+
+            { q: "Which SQL statement adds a new row to a table?",
+              options: ["ADD ROW", "INSERT INTO", "UPDATE", "APPEND"],
+              correct: 1,
+              explain: "INSERT INTO adds one or more new rows to a table. UPDATE changes rows that already exist." },
+
+            { q: "In an ER diagram, what does a line joining an oval to a rectangle show?",
+              options: [
+                "The attribute describes that entity",
+                "The entity has been deleted",
+                "The attribute is a foreign key",
+                "The entity is a weak entity"
+              ],
+              correct: 0,
+              explain: "A line between an attribute (oval) and an entity (rectangle) shows that the attribute belongs to, and describes, that entity." },
+
+            { q: "Which SQL clause is used to sort the result of a query?",
+              options: ["SORT BY", "ORDER BY", "GROUP BY", "ARRANGE BY"],
+              correct: 1,
+              explain: "ORDER BY sorts the result set in ascending (default) or descending (DESC) order." },
+
+            { q: "What does a 1:1 (one-to-one) relationship mean?",
+              options: [
+                "Many records on both sides can be related",
+                "One record on the left can relate to many records on the right",
+                "One record on one side relates to at most one record on the other side",
+                "No record on either side can be related"
+              ],
+              correct: 2,
+              explain: "In a 1:1 relationship, each record in one entity is associated with at most one record in the other entity." }
         ],
 
         medium: [
@@ -158,7 +193,52 @@
                 "It is not needed at all"
               ],
               correct: 1,
-              explain: "In a 1:N relationship, the foreign key referencing the '1' side's primary key is placed on the 'many' side table." }
+              explain: "In a 1:N relationship, the foreign key referencing the '1' side's primary key is placed on the 'many' side table." },
+
+            { q: "Which SQL constraint makes sure all values in a column are different from each other?",
+              options: ["CHECK", "UNIQUE", "DEFAULT", "NOT NULL"],
+              correct: 1,
+              explain: "UNIQUE prevents duplicate values in a column. A PRIMARY KEY is also unique, but a table can have only one primary key while it can have many UNIQUE constraints." },
+
+            { q: "A table is in First Normal Form (1NF) when:",
+              options: [
+                "It has no foreign keys",
+                "Every column holds atomic (indivisible) values",
+                "It has exactly one column",
+                "Every column stores numbers"
+              ],
+              correct: 1,
+              explain: "1NF requires that every column holds a single, atomic value, so lists of values in one cell are not allowed." },
+
+            { q: "What is a super key?",
+              options: [
+                "A minimal set of attributes that identifies a row",
+                "Any set of attributes that uniquely identifies a row, even if it contains extra attributes",
+                "A key that always references another table",
+                "A key made of exactly one column"
+              ],
+              correct: 1,
+              explain: "A super key is any set of attributes that uniquely identifies a row. A candidate key is a minimal super key." },
+
+            { q: "Which query shows the number of employees in each department from Emp(eid, name, dept)?",
+              options: [
+                "SELECT dept, COUNT(*) FROM Emp GROUP BY dept;",
+                "SELECT dept, COUNT(*) FROM Emp WHERE dept;",
+                "SELECT COUNT(dept) GROUP Emp;",
+                "SELECT dept FROM Emp COUNT(*);"
+              ],
+              correct: 0,
+              explain: "GROUP BY dept makes one group per department and COUNT(*) counts the rows in each group." },
+
+            { q: "What is the primary key of a weak entity in the relational model?",
+              options: [
+                "Only its own partial key",
+                "The owner entity's primary key combined with its own partial key (discriminator)",
+                "An auto-number only",
+                "A weak entity has no key"
+              ],
+              correct: 1,
+              explain: "A weak entity cannot be identified by its own attributes alone, so its table's primary key combines the owner's primary key with its partial key." }
         ],
 
         hard: [
@@ -235,7 +315,62 @@
                 "A subquery that never returns any rows"
               ],
               correct: 1,
-              explain: "A correlated subquery depends on the outer query (it references an outer column), so conceptually it's executed once per row processed by the outer query." }
+              explain: "A correlated subquery depends on the outer query (it references an outer column), so conceptually it's executed once per row processed by the outer query." },
+
+            { q: "R(A, B, C, D) has the functional dependencies A → B and B → C. What is the closure A+ ?",
+              options: ["{A}", "{A, B}", "{A, B, C}", "{A, B, C, D}"],
+              correct: 2,
+              explain: "Start with {A}. A → B adds B, then B → C adds C. Nothing determines D, so A+ = {A, B, C}." },
+
+            { q: "Two entities have a 1:1 relationship and both have total participation. How can this be mapped?",
+              options: [
+                "It always needs three tables",
+                "The two entities can be merged into a single table",
+                "A junction table with a composite key is mandatory",
+                "Foreign keys are not allowed"
+              ],
+              correct: 1,
+              explain: "With a 1:1 relationship and total participation on both sides, every row on one side pairs with exactly one row on the other, so one combined table is enough." },
+
+            { q: "Given Emp(eid) and Works(eid, pid), which query lists employees who work on no project?",
+              options: [
+                "SELECT eid FROM Emp WHERE eid NOT IN (SELECT eid FROM Works);",
+                "SELECT eid FROM Emp INNER JOIN Works ON Emp.eid = Works.eid;",
+                "SELECT eid FROM Works WHERE eid IS NULL;",
+                "SELECT DISTINCT eid FROM Works;"
+              ],
+              correct: 0,
+              explain: "NOT IN with a subquery keeps only employees whose eid never appears in Works. (If Works.eid could contain NULL, NOT EXISTS is the safer choice.)" },
+
+            { q: "In a specialization, if one entity can belong to more than one subclass at the same time, the constraint is called:",
+              options: ["Disjoint", "Overlapping", "Total", "Partial"],
+              correct: 1,
+              explain: "Overlapping means an entity may belong to several subclasses. Disjoint means it can belong to at most one." },
+
+            { q: "R(A, B, C, D) has A as its only candidate key. How many super keys does R have?",
+              options: ["4", "8", "15", "16"],
+              correct: 1,
+              explain: "Every super key must contain A. B, C and D can each be included or left out freely: 2³ = 8 super keys." },
+
+            { q: "A decomposition of R into R1 and R2 is lossless-join when:",
+              options: [
+                "R1 ∩ R2 functionally determines R1 or R2",
+                "R1 and R2 have no common attributes",
+                "Both R1 and R2 are in BCNF",
+                "The decomposition is never lossless"
+              ],
+              correct: 0,
+              explain: "For a binary decomposition, the join is lossless if the common attributes form a key of at least one of the two relations." },
+
+            { q: "What does this return? SELECT a.* FROM A a LEFT JOIN B b ON a.id = b.id WHERE b.id IS NULL;",
+              options: [
+                "Rows of A that have no matching row in B",
+                "Rows that match in both A and B",
+                "All rows of B",
+                "The Cartesian product of A and B"
+              ],
+              correct: 0,
+              explain: "LEFT JOIN keeps every row of A. Rows with no match in B have NULL in b.id, so the WHERE filter keeps only the unmatched rows of A." }
         ]
     };
 
@@ -315,6 +450,22 @@
           q: "What happens to related child rows by default if a parent row is deleted and a foreign key has 'ON DELETE CASCADE'?",
           answer: "All matching child rows are automatically deleted too",
           explain: "ON DELETE CASCADE automatically deletes all child rows that reference the deleted parent row, keeping referential integrity intact." },
+
+        /* ---------- GATE (real, paraphrased) ---------- */
+        { exam: "GATE", year: 2012,
+          q: "Comparing the ER model with the relational model, which statement is INCORRECT?",
+          answer: "In a row of a relational table, an attribute can hold more than one value",
+          explain: "Multivalued and composite attributes are allowed in the ER model. In a relational table, each attribute in a row holds exactly one value (or NULL), as required by First Normal Form." },
+
+        { exam: "GATE", year: 2012,
+          q: "Relations r1(A, B) and r2(C, D) are given. B is a foreign key referring to C in r2. If referential integrity holds, which condition is always true?",
+          answer: "Π_B(r1) − Π_C(r2) = ∅ (every B value in r1 appears among the C values of r2)",
+          explain: "A foreign key value must match an existing key value in the referenced relation, so the set of B values in r1 is a subset of the C values in r2." },
+
+        { exam: "GATE", year: 2008,
+          q: "A library relation Book(Title, Author, Catalog_no, Publisher, Year, Price) has these FDs: Catalog_no determines Title, Author, Publisher and Year; and (Publisher, Title, Year) determines Price. Which statement about its normal form is correct?",
+          answer: "Book is in 2NF but not in 3NF (so it is not in BCNF either)",
+          explain: "Non-prime attributes such as Publisher and Year depend on the key only through Catalog_no, which is a transitive dependency, so 3NF fails. Catalog_no is not a key of Book, so BCNF fails too." },
 
         /* ---------- GATE (adapted) ---------- */
         { exam: "GATE", year: "adapted",
