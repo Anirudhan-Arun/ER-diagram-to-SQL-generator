@@ -314,8 +314,9 @@
         { exam: "BHEL", year: 2021,
           q: "What happens to related child rows by default if a parent row is deleted and a foreign key has 'ON DELETE CASCADE'?",
           answer: "All matching child rows are automatically deleted too",
-          explain: "ON DELETE CASCADE automatically deletes all child rows that reference the deleted parent row, keeping referential integrity intact." }
-               /* ---------- GATE (adapted) ---------- */
+          explain: "ON DELETE CASCADE automatically deletes all child rows that reference the deleted parent row, keeping referential integrity intact." },
+
+        /* ---------- GATE (adapted) ---------- */
         { exam: "GATE", year: "adapted",
           q: "Two entities E1 and E2 (each with a key and only single-valued attributes) have an M:N relationship. What is the minimum number of tables needed to represent this in the relational model?",
           answer: "3",
@@ -795,63 +796,72 @@
 
     examBankFilter.addEventListener("change", renderExamBank);
     examBankSearch.addEventListener("input", renderExamBank);
-        /* ===== COMPETITIVE EXAMS AS ITS OWN TOP TAB ===== */
-    (function () {
+
+
+    /* =========================================================
+       COMPETITIVE EXAMS AS ITS OWN TOP TAB
+       Wrapped in try/catch so that if anything here does not
+       match your page, the normal Quiz page keeps working.
+       ========================================================= */
+    try {
 
         const quizView = quizContainer.closest(".view");
         const quizNavBtn = Array.from(document.querySelectorAll(".main-nav .nav-btn"))
             .find(btn => btn.textContent.trim() === "Quiz");
 
-        if (!quizView || !quizNavBtn) return;
+        if (quizView && quizNavBtn) {
 
-        // 1. new page for competitive exams
-        const examView = document.createElement("div");
-        examView.id = "examView";
-        examView.className = "view";
-        examView.innerHTML = `
-            <section class="panel info-page">
-                <div class="panel-title">
-                    <div>
-                        <h2>Competitive Exams</h2>
-                        <p>Question bank for ER modeling and SQL, adapted from GATE, TANCET, PSU, DRDO and BHEL style papers.</p>
+            // 1. new page for competitive exams
+            const examView = document.createElement("div");
+            examView.id = "examView";
+            examView.className = "view";
+            examView.innerHTML = `
+                <section class="panel info-page">
+                    <div class="panel-title">
+                        <div>
+                            <h2>Competitive Exams</h2>
+                            <p>Question bank for ER modeling and SQL, in the style of GATE, TANCET, PSU, DRDO and BHEL papers.</p>
+                        </div>
                     </div>
-                </div>
-            </section>
-        `;
-        quizView.parentNode.insertBefore(examView, quizView.nextSibling);
+                </section>
+            `;
+            quizView.parentNode.insertBefore(examView, quizView.nextSibling);
 
-        // 2. move the exam bank out of the Quiz page
-        const examPanel = examView.querySelector(".info-page");
-        examPanel.appendChild(examBankSetup);
-        examPanel.appendChild(examBankList);
-        examBankSetup.style.display = "";
-        examBankList.style.display = "";
+            // 2. move the exam bank out of the Quiz page
+            const examPanel = examView.querySelector(".info-page");
+            examPanel.appendChild(examBankSetup);
+            examPanel.appendChild(examBankList);
+            examBankSetup.style.display = "";
+            examBankList.style.display = "";
 
-        // 3. hide the old Practice / Competitive switch buttons
-        quizModePracticeBtn.style.display = "none";
-        quizModeExamBtn.style.display = "none";
-        const switchRow = quizModePracticeBtn.parentElement;
-        if (switchRow && switchRow.children.length === 2) {
-            switchRow.style.display = "none";
+            // 3. hide the old Practice / Competitive switch buttons
+            quizModePracticeBtn.style.display = "none";
+            quizModeExamBtn.style.display = "none";
+            const switchRow = quizModePracticeBtn.parentElement;
+            if (switchRow && switchRow.children.length === 2) {
+                switchRow.style.display = "none";
+            }
+            practiceSetup.style.display = "";
+            quizContainer.style.display = "";
+
+            // 4. new nav button right after "Quiz"
+            const examNavBtn = document.createElement("button");
+            examNavBtn.className = "nav-btn";
+            examNavBtn.setAttribute("data-view", "examView");
+            examNavBtn.textContent = "Competitive Exams";
+            quizNavBtn.after(examNavBtn);
+
+            examNavBtn.addEventListener("click", () => {
+                document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+                examNavBtn.classList.add("active");
+                document.querySelectorAll(".view").forEach(v => v.classList.remove("active-view"));
+                examView.classList.add("active-view");
+                renderExamBank();
+            });
         }
-        practiceSetup.style.display = "";
-        quizContainer.style.display = "";
 
-        // 4. new nav button right after "Quiz"
-        const examNavBtn = document.createElement("button");
-        examNavBtn.className = "nav-btn";
-        examNavBtn.setAttribute("data-view", "examView");
-        examNavBtn.textContent = "Competitive Exams";
-        quizNavBtn.after(examNavBtn);
-
-        examNavBtn.addEventListener("click", () => {
-            document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-            examNavBtn.classList.add("active");
-            document.querySelectorAll(".view").forEach(v => v.classList.remove("active-view"));
-            examView.classList.add("active-view");
-            renderExamBank();
-        });
-
-    })();
+    } catch (err) {
+        console.error("Competitive Exams tab setup failed:", err);
+    }
 
 })();
