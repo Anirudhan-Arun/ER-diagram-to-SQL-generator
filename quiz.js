@@ -315,6 +315,195 @@
           q: "What happens to related child rows by default if a parent row is deleted and a foreign key has 'ON DELETE CASCADE'?",
           answer: "All matching child rows are automatically deleted too",
           explain: "ON DELETE CASCADE automatically deletes all child rows that reference the deleted parent row, keeping referential integrity intact." }
+               /* ---------- GATE (adapted) ---------- */
+        { exam: "GATE", year: "adapted",
+          q: "Two entities E1 and E2 (each with a key and only single-valued attributes) have an M:N relationship. What is the minimum number of tables needed to represent this in the relational model?",
+          answer: "3",
+          explain: "An M:N relationship needs its own table holding the keys of both entities, plus one table for each entity: 2 + 1 = 3." },
+
+        { exam: "GATE", year: "adapted",
+          q: "R(A,B,C,D) has the FDs AB → C, C → D, D → A. Which are the candidate keys of R?",
+          answer: "AB, BC and BD",
+          explain: "B never appears on the right side, so every key must contain B. AB, BC and BD each have closure {A,B,C,D}, and none can be reduced further." },
+
+        { exam: "GATE", year: "adapted",
+          q: "In an ER diagram, the participation of a weak entity set in its identifying relationship is always:",
+          answer: "Total",
+          explain: "A weak entity cannot exist without its owner entity, so every weak-entity instance must take part in the identifying relationship (total participation)." },
+
+        { exam: "GATE", year: "adapted",
+          q: "Table R has 10 tuples and table S has 20 tuples. How many tuples does R CROSS JOIN S return?",
+          answer: "200",
+          explain: "A cross join pairs every row of R with every row of S, giving 10 × 20 = 200 tuples." },
+
+        { exam: "GATE", year: "adapted",
+          q: "Which query lists departments that have more than 5 employees from Emp(eid, name, dept)?",
+          answer: "SELECT dept FROM Emp GROUP BY dept HAVING COUNT(*) > 5;",
+          explain: "Group the rows by dept, then use HAVING to filter the groups on the aggregate. WHERE cannot use COUNT(*)." },
+
+        { exam: "GATE", year: "adapted",
+          q: "A decomposition of R into R1 and R2 is lossless-join if and only if the common attributes (R1 ∩ R2) satisfy which condition?",
+          answer: "R1 ∩ R2 functionally determines R1 or R2 (it is a key of at least one of them)",
+          explain: "For a binary decomposition, the join is lossless when R1 ∩ R2 → R1 or R1 ∩ R2 → R2 holds in the original relation." },
+
+        { exam: "GATE", year: "adapted",
+          q: "R(A,B,C) has A as its only candidate key. How many super keys does R have?",
+          answer: "4",
+          explain: "Every super key must contain A. The other attributes B and C are free: 2² = 4 super keys (A, AB, AC, ABC)." },
+
+        { exam: "GATE", year: "adapted",
+          q: "What does the SQL expression NULL = NULL evaluate to?",
+          answer: "UNKNOWN",
+          explain: "Any comparison with NULL gives UNKNOWN, not TRUE. Use IS NULL to test for NULL." },
+
+        { exam: "GATE", year: "adapted",
+          q: "Entities E1 and E2 have a 1:N relationship (E2 is on the N side) and E2 has total participation. What is the minimum number of tables needed?",
+          answer: "2",
+          explain: "The relationship is merged into the N-side table as a foreign key, so only E1 and E2 need tables." },
+
+        /* ---------- TANCET (adapted) ---------- */
+        { exam: "TANCET", year: "adapted",
+          q: "Which SQL operator is used for pattern matching on strings?",
+          answer: "LIKE",
+          explain: "LIKE works with the wildcards % (any number of characters) and _ (exactly one character)." },
+
+        { exam: "TANCET", year: "adapted",
+          q: "Which command removes a table's structure together with all its data permanently?",
+          answer: "DROP TABLE",
+          explain: "DROP TABLE deletes the table definition and its rows. DELETE removes only rows and TRUNCATE empties the table but keeps its structure." },
+
+        { exam: "TANCET", year: "adapted",
+          q: "What is the cardinality of the relationship works_for between EMPLOYEE and DEPARTMENT, where many employees work in one department?",
+          answer: "N:1 (many-to-one)",
+          explain: "Many employees map to a single department, so the cardinality from EMPLOYEE to DEPARTMENT is N:1." },
+
+        { exam: "TANCET", year: "adapted",
+          q: "Which of the following is a DDL command?",
+          answer: "ALTER",
+          explain: "CREATE, ALTER and DROP are DDL commands. SELECT is DQL, and INSERT, UPDATE and DELETE are DML." },
+
+        { exam: "TANCET", year: "adapted",
+          q: "A column has some NULL values. How do COUNT(*) and COUNT(column) differ?",
+          answer: "COUNT(*) counts all rows; COUNT(column) ignores NULL values",
+          explain: "COUNT(*) counts every row, while COUNT(column) counts only rows where that column is not NULL." },
+
+        { exam: "TANCET", year: "adapted",
+          q: "In a 1:N relationship, an attribute of the relationship can be moved to which side?",
+          answer: "The N-side entity",
+          explain: "Each N-side instance takes part in at most one relationship instance, so the relationship attribute can be stored in that entity's table." },
+
+        { exam: "TANCET", year: "adapted",
+          q: "How is an identifying relationship (of a weak entity) shown in an ER diagram?",
+          answer: "A double diamond",
+          explain: "Weak entities use a double rectangle and their identifying relationship uses a double diamond." },
+
+        { exam: "TANCET", year: "adapted",
+          q: "What is the difference between UNION and UNION ALL?",
+          answer: "UNION removes duplicate rows; UNION ALL keeps them",
+          explain: "UNION combines the results and eliminates duplicates. UNION ALL keeps every row and is usually faster." },
+
+        /* ---------- PSU (adapted) ---------- */
+        { exam: "PSU", year: "adapted",
+          q: "What is the default sorting order of ORDER BY in SQL?",
+          answer: "Ascending",
+          explain: "ORDER BY sorts in ascending order unless DESC is specified." },
+
+        { exam: "PSU", year: "adapted",
+          q: "Which symbol is used for an ISA (specialization / generalization) relationship in an ER diagram?",
+          answer: "A triangle",
+          explain: "An ISA relationship connects a superclass to its subclasses and is drawn as a triangle." },
+
+        { exam: "PSU", year: "adapted",
+          q: "A relation is in 2NF but has a transitive dependency. Which normal form does it fail?",
+          answer: "3NF",
+          explain: "3NF requires that no non-key attribute depends on another non-key attribute, so a transitive dependency violates 3NF." },
+
+        { exam: "PSU", year: "adapted",
+          q: "Which SQL command gives a user permission to access a table?",
+          answer: "GRANT",
+          explain: "GRANT assigns privileges to users and REVOKE takes them back." },
+
+        { exam: "PSU", year: "adapted",
+          q: "Which statement adds a new column email to the table Student?",
+          answer: "ALTER TABLE Student ADD email VARCHAR(50);",
+          explain: "ALTER TABLE ... ADD changes an existing table's structure by adding a column." },
+
+        { exam: "PSU", year: "adapted",
+          q: "What is a view in SQL?",
+          answer: "A virtual table defined by a stored query",
+          explain: "A view stores a SELECT query, not data. Its result is computed from the base tables when it is used." },
+
+        { exam: "PSU", year: "adapted",
+          q: "What is the primary key of the table created for an M:N relationship?",
+          answer: "The combination of the primary keys of both participating entities",
+          explain: "The junction table uses the two foreign keys together as a composite primary key, so each pairing appears only once." },
+
+        { exam: "PSU", year: "adapted",
+          q: "What does NATURAL JOIN do?",
+          answer: "Joins two tables automatically on all columns with the same name",
+          explain: "NATURAL JOIN matches columns with the same name in both tables and shows each common column once." },
+
+        /* ---------- DRDO (adapted) ---------- */
+        { exam: "DRDO", year: "adapted",
+          q: "Employee(eid, name, manager_id) stores each employee's manager id. Which technique lists each employee with the manager's name?",
+          answer: "A self join of Employee with itself",
+          explain: "Joining Employee to an alias of itself (manager_id = eid) lets the same table play both employee and manager." },
+
+        { exam: "DRDO", year: "adapted",
+          q: "Which integrity rule says that no primary-key attribute can be NULL?",
+          answer: "Entity integrity",
+          explain: "Entity integrity guarantees every row can be identified, so a primary key can never be NULL." },
+
+        { exam: "DRDO", year: "adapted",
+          q: "Why is SELECT dept, name, COUNT(*) FROM Emp GROUP BY dept invalid in standard SQL?",
+          answer: "name is neither in GROUP BY nor inside an aggregate function",
+          explain: "Every selected column must be a grouping column or be aggregated. name has many values per dept." },
+
+        { exam: "DRDO", year: "adapted",
+          q: "What does SELECT name FROM Emp WHERE salary > (SELECT AVG(salary) FROM Emp); return?",
+          answer: "Names of employees earning more than the average salary",
+          explain: "The inner query computes the average once, and the outer query keeps rows above it." },
+
+        { exam: "DRDO", year: "adapted",
+          q: "In relational algebra, which operator picks rows and which picks columns?",
+          answer: "Selection (σ) picks rows; Projection (π) picks columns",
+          explain: "σ filters tuples by a condition and π keeps only the listed attributes." },
+
+        { exam: "DRDO", year: "adapted",
+          q: "How is a multivalued attribute mapped when converting an ER diagram to tables?",
+          answer: "Into a separate table containing the entity's primary key and the attribute",
+          explain: "Each value gets its own row, with the entity's key as a foreign key, so every column stays single-valued." },
+
+        /* ---------- BHEL (adapted) ---------- */
+        { exam: "BHEL", year: "adapted",
+          q: "Which of these breaks First Normal Form?",
+          answer: "A column storing multiple values, such as a list of phone numbers in one cell",
+          explain: "1NF requires atomic (indivisible) values in every column." },
+
+        { exam: "BHEL", year: "adapted",
+          q: "Which SQL constraint restricts the values a column can accept using a condition, for example age >= 18?",
+          answer: "CHECK",
+          explain: "A CHECK constraint rejects any row whose value does not satisfy the given condition." },
+
+        { exam: "BHEL", year: "adapted",
+          q: "How is a derived attribute drawn in an ER diagram?",
+          answer: "A dashed oval",
+          explain: "Derived attributes, such as Age computed from Date of Birth, are drawn with a dashed oval." },
+
+        { exam: "BHEL", year: "adapted",
+          q: "Is the range in BETWEEN 10 AND 20 inclusive?",
+          answer: "Yes, both 10 and 20 are included",
+          explain: "BETWEEN a AND b is the same as >= a AND <= b." },
+
+        { exam: "BHEL", year: "adapted",
+          q: "How is a key attribute shown in an ER diagram?",
+          answer: "An oval with its name underlined",
+          explain: "The underline marks the attribute that uniquely identifies the entity." },
+
+        { exam: "BHEL", year: "adapted",
+          q: "Which JOIN produces every combination of rows from two tables without an ON condition?",
+          answer: "CROSS JOIN",
+          explain: "CROSS JOIN returns the Cartesian product of both tables." }
     ];
 
 
