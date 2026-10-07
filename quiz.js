@@ -795,5 +795,63 @@
 
     examBankFilter.addEventListener("change", renderExamBank);
     examBankSearch.addEventListener("input", renderExamBank);
+        /* ===== COMPETITIVE EXAMS AS ITS OWN TOP TAB ===== */
+    (function () {
+
+        const quizView = quizContainer.closest(".view");
+        const quizNavBtn = Array.from(document.querySelectorAll(".main-nav .nav-btn"))
+            .find(btn => btn.textContent.trim() === "Quiz");
+
+        if (!quizView || !quizNavBtn) return;
+
+        // 1. new page for competitive exams
+        const examView = document.createElement("div");
+        examView.id = "examView";
+        examView.className = "view";
+        examView.innerHTML = `
+            <section class="panel info-page">
+                <div class="panel-title">
+                    <div>
+                        <h2>Competitive Exams</h2>
+                        <p>Question bank for ER modeling and SQL, adapted from GATE, TANCET, PSU, DRDO and BHEL style papers.</p>
+                    </div>
+                </div>
+            </section>
+        `;
+        quizView.parentNode.insertBefore(examView, quizView.nextSibling);
+
+        // 2. move the exam bank out of the Quiz page
+        const examPanel = examView.querySelector(".info-page");
+        examPanel.appendChild(examBankSetup);
+        examPanel.appendChild(examBankList);
+        examBankSetup.style.display = "";
+        examBankList.style.display = "";
+
+        // 3. hide the old Practice / Competitive switch buttons
+        quizModePracticeBtn.style.display = "none";
+        quizModeExamBtn.style.display = "none";
+        const switchRow = quizModePracticeBtn.parentElement;
+        if (switchRow && switchRow.children.length === 2) {
+            switchRow.style.display = "none";
+        }
+        practiceSetup.style.display = "";
+        quizContainer.style.display = "";
+
+        // 4. new nav button right after "Quiz"
+        const examNavBtn = document.createElement("button");
+        examNavBtn.className = "nav-btn";
+        examNavBtn.setAttribute("data-view", "examView");
+        examNavBtn.textContent = "Competitive Exams";
+        quizNavBtn.after(examNavBtn);
+
+        examNavBtn.addEventListener("click", () => {
+            document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+            examNavBtn.classList.add("active");
+            document.querySelectorAll(".view").forEach(v => v.classList.remove("active-view"));
+            examView.classList.add("active-view");
+            renderExamBank();
+        });
+
+    })();
 
 })();
