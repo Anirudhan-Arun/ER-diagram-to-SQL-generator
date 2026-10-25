@@ -387,9 +387,22 @@
    <p>SQL statements generated from your ER model.</p>
   </div>
 
-  <button id="copyBtn" class="secondary-btn">
-   Copy SQL
-  </button>
+    <div class="sql-header-actions">
+
+   <label for="sqlDialectSelect" class="dialect-label">Output format</label>
+
+   <select id="sqlDialectSelect" class="example-select">
+    <option value="generic">Generic SQL</option>
+    <option value="mysql">MySQL</option>
+    <option value="postgresql">PostgreSQL</option>
+    <option value="oracle">Oracle</option>
+   </select>
+
+   <button id="copyBtn" class="secondary-btn">
+    Copy SQL
+   </button>
+
+  </div>
 
  </div>
 
